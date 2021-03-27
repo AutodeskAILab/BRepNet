@@ -1,0 +1,5 @@
+{
+    "faces": ["f", "mf"],
+    "edges": ["e", "ne", "pe", "mne", "mpe",     "nmne", "pmpe", "mpmpe", "mnmne"],
+    "coedges": ["", "m", "n", "nm", "p", "pm", "mn", "mnm", "mp", "mpm",    "nmn", "pmp", "mpmp", "mnmn"]
+}

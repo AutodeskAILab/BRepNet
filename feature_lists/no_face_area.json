@@ -1,0 +1,25 @@
+{
+    "face_features": [
+        "Plane",
+        "Cylinder",
+        "Cone",
+        "SphereFaceFeature",
+        "TorusFaceFeature",
+        "RationalNurbsFaceFeature"
+    ],
+    "edge_features": [
+        "Convex edge",
+        "Convext edge",
+        "Smooth",
+        "EdgeLengthFeature",
+        "CircularEdgeFeature",
+        "ClosedEdgeFeature",
+        "EllipticalEdgeFeature",
+        "HelicalEdgeFeature",
+        "IntcurveEdgeFeature",
+        "StraightEdgeFeature"
+    ],
+    "coedge_features": [
+        "ReversedCoEdgeFeature"
+    ]
+}
