@@ -9,8 +9,8 @@
         "RationalNurbsFaceFeature"
     ],
     "edge_features": [
+        "Concave edge",
         "Convex edge",
-        "Convext edge",
         "Smooth",
         "EdgeLengthFeature",
         "ClosedEdgeFeature"
