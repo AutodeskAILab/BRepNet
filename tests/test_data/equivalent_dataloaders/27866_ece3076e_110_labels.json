@@ -1,0 +1,374 @@
+{
+    "face_labels": [
+        {
+            "entity": 0,
+            "labels": [
+                {
+                    "label_name": "ExtrudeSide",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "ExtrudeEnd",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "CutSide",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "CutEnd",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "Fillet",
+                    "label_value": 1.0
+                },
+                {
+                    "label_name": "Chamfer",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "RevolveSide",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "RevolveEnd",
+                    "label_value": 0.0
+                }
+            ]
+        },
+        {
+            "entity": 1,
+            "labels": [
+                {
+                    "label_name": "ExtrudeSide",
+                    "label_value": 1.0
+                },
+                {
+                    "label_name": "ExtrudeEnd",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "CutSide",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "CutEnd",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "Fillet",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "Chamfer",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "RevolveSide",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "RevolveEnd",
+                    "label_value": 0.0
+                }
+            ]
+        },
+        {
+            "entity": 2,
+            "labels": [
+                {
+                    "label_name": "ExtrudeSide",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "ExtrudeEnd",
+                    "label_value": 1.0
+                },
+                {
+                    "label_name": "CutSide",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "CutEnd",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "Fillet",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "Chamfer",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "RevolveSide",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "RevolveEnd",
+                    "label_value": 0.0
+                }
+            ]
+        },
+        {
+            "entity": 3,
+            "labels": [
+                {
+                    "label_name": "ExtrudeSide",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "ExtrudeEnd",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "CutSide",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "CutEnd",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "Fillet",
+                    "label_value": 1.0
+                },
+                {
+                    "label_name": "Chamfer",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "RevolveSide",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "RevolveEnd",
+                    "label_value": 0.0
+                }
+            ]
+        },
+        {
+            "entity": 4,
+            "labels": [
+                {
+                    "label_name": "ExtrudeSide",
+                    "label_value": 1.0
+                },
+                {
+                    "label_name": "ExtrudeEnd",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "CutSide",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "CutEnd",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "Fillet",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "Chamfer",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "RevolveSide",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "RevolveEnd",
+                    "label_value": 0.0
+                }
+            ]
+        },
+        {
+            "entity": 5,
+            "labels": [
+                {
+                    "label_name": "ExtrudeSide",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "ExtrudeEnd",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "CutSide",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "CutEnd",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "Fillet",
+                    "label_value": 1.0
+                },
+                {
+                    "label_name": "Chamfer",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "RevolveSide",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "RevolveEnd",
+                    "label_value": 0.0
+                }
+            ]
+        },
+        {
+            "entity": 6,
+            "labels": [
+                {
+                    "label_name": "ExtrudeSide",
+                    "label_value": 1.0
+                },
+                {
+                    "label_name": "ExtrudeEnd",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "CutSide",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "CutEnd",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "Fillet",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "Chamfer",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "RevolveSide",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "RevolveEnd",
+                    "label_value": 0.0
+                }
+            ]
+        },
+        {
+            "entity": 7,
+            "labels": [
+                {
+                    "label_name": "ExtrudeSide",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "ExtrudeEnd",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "CutSide",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "CutEnd",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "Fillet",
+                    "label_value": 1.0
+                },
+                {
+                    "label_name": "Chamfer",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "RevolveSide",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "RevolveEnd",
+                    "label_value": 0.0
+                }
+            ]
+        },
+        {
+            "entity": 8,
+            "labels": [
+                {
+                    "label_name": "ExtrudeSide",
+                    "label_value": 1.0
+                },
+                {
+                    "label_name": "ExtrudeEnd",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "CutSide",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "CutEnd",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "Fillet",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "Chamfer",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "RevolveSide",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "RevolveEnd",
+                    "label_value": 0.0
+                }
+            ]
+        },
+        {
+            "entity": 9,
+            "labels": [
+                {
+                    "label_name": "ExtrudeSide",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "ExtrudeEnd",
+                    "label_value": 1.0
+                },
+                {
+                    "label_name": "CutSide",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "CutEnd",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "Fillet",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "Chamfer",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "RevolveSide",
+                    "label_value": 0.0
+                },
+                {
+                    "label_name": "RevolveEnd",
+                    "label_value": 0.0
+                }
+            ]
+        }
+    ]
+}

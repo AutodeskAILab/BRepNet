@@ -1,11 +1,14 @@
 from collections import OrderedDict 
+from pathlib import Path
 from pytorch_lightning.core.lightning import LightningModule
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 import utils.data_utils as data_utils
-from dataloaders.brepnet_dataset import BRepNetDataset
+from dataloaders.brepnet_dataset import BRepNetDataset, brepnet_collate_fn
+from dataloaders.brepnet_dataset_old import BRepNetDatasetOld
+from dataloaders.max_num_faces_sampler import MaxNumFacesSampler
 
 
 def build_matrix_Psi(Xf, Xe, Xc, Kf, Ke, Kc):
@@ -163,7 +166,7 @@ class BRepNetMLP(LightningModule):
     negative values, which greatly reduces performance. 
     """
 
-    def __init__(self, num_layers, input_size, hidden_size, output_size, final_layer):
+    def __init__(self, num_layers, input_size, hidden_size, output_size, final_layer, dropout=None):
         """Initialize the layer"""
         super(BRepNetMLP, self).__init__()
         assert num_layers > 0, "Must have at least 1 layer"
@@ -194,6 +197,10 @@ class BRepNetMLP(LightningModule):
                     use_relu = False
 
             mlp_layers[f"linear_{i}"] = nn.Linear(linear_input_size, linear_output_size, bias=use_bias)
+
+            if dropout is not None:
+                mlp_layers[f"dropout_{i}"] = nn.Dropout(p=dropout)
+
             if use_relu:
                 mlp_layers[f"relu_{i}"] = nn.ReLU()
         
@@ -210,7 +217,7 @@ class BRepNetLayer(LightningModule):
     This can be either the input layer or one of the hidden layers.
     """
 
-    def __init__(self, num_mlp_layers, input_size, output_size):
+    def __init__(self, num_mlp_layers, input_size, output_size, dropout=None):
         """
         Initialization of a general BRepNet layer.
 
@@ -221,6 +228,9 @@ class BRepNetLayer(LightningModule):
 
         output_size    - This needs to be set to the length of the output feature vectors
                          for the faces, edges and coedges
+
+        dropout        - To use dropout, set this to the dropout probablity
+                         No dropout is used if this is set to None
         """ 
         super(BRepNetLayer, self).__init__()
         self.output_size = output_size
@@ -231,7 +241,7 @@ class BRepNetLayer(LightningModule):
         # The matrix will get split into 3 components, one for faces, one for edges and 
         # one for coedges.  Hence the output of the MLP should always be 3 times
         # the final output size.
-        self.mlp = BRepNetMLP(num_mlp_layers, input_size, 3*output_size, 3*output_size, final_layer)
+        self.mlp = BRepNetMLP(num_mlp_layers, input_size, 3*output_size, 3*output_size, final_layer, dropout)
         
 
     def forward(self, Xf, Xe, Xc, Kf, Ke, Kc, Ce, Cf, Csf):
@@ -286,7 +296,7 @@ class BRepNetFaceOutputLayer(LightningModule):
     The hidden state for edges and coedges will not be created.
     """
         
-    def __init__(self, num_mlp_layers, input_size, hidden_size, output_size):
+    def __init__(self, num_mlp_layers, input_size, hidden_size, output_size, dropout=None):
         """
         Initialization of the BRepNet output layer.
 
@@ -300,6 +310,9 @@ class BRepNetFaceOutputLayer(LightningModule):
 
         output_size    - This needs to be the number of classes which faces 
                          can be categorized into.
+
+        dropout        - To use dropout, set this to the dropout probablity
+                         No dropout is used if this is set to None
         """ 
         super(BRepNetFaceOutputLayer, self).__init__()
 
@@ -310,7 +323,7 @@ class BRepNetFaceOutputLayer(LightningModule):
 
         # The output layer has the same hidden size as all the other layers
         # but the output size is just the number of classes
-        self.mlp = BRepNetMLP(num_mlp_layers, input_size, 3*hidden_size, output_size, final_layer)
+        self.mlp = BRepNetMLP(num_mlp_layers, input_size, 3*hidden_size, output_size, final_layer, dropout)
 
 
     def forward(self, Xf, Xe, Xc, Kf, Ke, Kc, Ce, Cf, Csf):
@@ -356,7 +369,11 @@ class BRepNet(LightningModule):
         kernel = data_utils.load_json_data(opts.kernel)
         input_feature_metadata = data_utils.load_json_data(opts.input_features)
         num_classes = opts.num_classes
-        
+
+        # Set up the names of the segments for clearer 
+        # output statistics
+        self.segment_names = data_utils.load_json_data(self.find_segment_names_file(opts))
+
         # We always have one special input and special output layer
         assert opts.num_layers >= 2
 
@@ -387,32 +404,66 @@ class BRepNet(LightningModule):
         # Create the layers of the network
         self.layers = nn.ModuleList()
 
+        dropout = opts.dropout
+
         # The first layer has a size based on in the number of input features
-        self.layers.append(BRepNetLayer(num_mlp_layers, mlp_input_size, num_filters))
+        self.layers.append(BRepNetLayer(num_mlp_layers, mlp_input_size, num_filters, dropout))
 
         # The hidden layers has a size based on in the number of filters
         for l in range(2, opts.num_layers):
-            self.layers.append(BRepNetLayer(num_mlp_layers, mlp_hidden_size, num_filters))
+            self.layers.append(BRepNetLayer(num_mlp_layers, mlp_hidden_size, num_filters, dropout))
 
         # The output layer is similar, but it generates only
         # the logits for the faces.
-        self.output_layer = BRepNetFaceOutputLayer(num_mlp_layers, mlp_hidden_size, num_filters, num_classes) 
+        self.output_layer = BRepNetFaceOutputLayer(num_mlp_layers, mlp_hidden_size, num_filters, num_classes, dropout) 
 
+        # Save the hyper-parameters
+        self.save_hyperparameters()
 
     @staticmethod
     def add_model_specific_args(parser):
-        parser.add_argument("--dataset_file", type=str, default="example_files/example_dataset.json", help="Path to the dataset file containing the train/val/test split")
-        parser.add_argument("--dataset_dir", type=str, default="example_files", help="Path to the dataset directory containing json files")
+        parser.add_argument("--dataset_file", type=str, required=True, help="Path to the dataset file containing the train/val/test split")
+        parser.add_argument("--dataset_dir", type=str, required=True, help="Path to the dataset directory the files generated by pextract_brepnet_data_from_step.py")
+        parser.add_argument("--label_dir",  type=str, help="Path to the directory containing the segmentation labels.  This will typically be the step dir in the dataset")
+        parser.add_argument("--log_dir",  type=str, default="./logs", help="Path to the directory where you want to write logs")
         parser.add_argument("--input_features", type=str, default="feature_lists/all.json", help="List of features to read")
         parser.add_argument("--kernel", type=str, default="kernels/winged_edge.json", help="Which kernel to use")
+        parser.add_argument("--dropout", type=float, help="If using dropout then this is the dropout probability")
+        parser.add_argument("--segment_names", type=str, help="The segment names file from the dataset")
         parser.add_argument("--num_layers", type=int, default=2, help="2 gives just the input and output layers")
         parser.add_argument("--num_mlp_layers", type=int, default=2, help="Number of layers in the mlp.  Value > 0")
         parser.add_argument("--num_filters", type=int, default=84, help="Number of filters.  Hyper-parameter s in the paper.  Value > 0")
         parser.add_argument("--num_classes", type=int, default=8, help="Number of classes used in the dataset")
         parser.add_argument("--learning_rate", type=float, default=0.001, help="Learning rate")
-        parser.add_argument('--workers', type=int, default=0, help="Number of worker threads")
-        parser.add_argument("--test_with_pretrained_model", type=str,  help="Model to use for testing")
+        parser.add_argument('--batch_size', type=int, default=200, help="Number of breps in one batch")
+        parser.add_argument('--max_num_faces_per_batch', type=int, help="If defined this sets a limit on the number of faces per batch")
+        parser.add_argument('--num_workers', type=int, default=0, help="Number of worker threads")
+        parser.add_argument('--use_old_dataloader', action="store_true", help="Use the old dataloader")
+        parser.add_argument('--shuffle_train_set', type=bool, default=True, help="Use shuffling on the training set")
+        parser.add_argument("--test_with_validation_set", action="store_true", help="Model to use for testing")
         return parser
+
+
+    def find_segment_names_file(self, opts):
+        """
+        Try to find the segment names file in some usual places
+        """
+        if opts.segment_names is not None:
+            segment_names_file = Path(opts.segment_names)
+            if segment_names_file.exists():
+                return segment_names_file
+            else:
+                print(f"Warning! {segment_names_file}  not found")
+        
+        # Try looking for the segment names file above the dataset_dir
+        segment_names_file = Path(opts.dataset_dir).parent / "segment_names.json"
+        if segment_names_file.exists():
+                return segment_names_file
+
+        print("Warning! segment names not found.")
+        print("Use the option --segment_names path/to/segment_names.json")
+        return None
+            
 
     def forward(self, Xf, Xe, Xc, Kf, Ke, Kc, Ce, Cf, Csf):
         """
@@ -458,9 +509,9 @@ class BRepNet(LightningModule):
         return torch.argmax(norm_seg_scores, dim=1)
 
 
-    def training_step(self, batch, batch_idx):
+    def brepnet_step(self, batch, batch_idx):
         """
-        Train the BRepNet network on one batch
+        A train or validation step for the BRepNet network on one batch
         """
         # Unpack the tensor data
         Xf = batch["face_features"]
@@ -470,15 +521,15 @@ class BRepNet(LightningModule):
         Ke = batch["edge_kernel_tensor"]
         Kc = batch["coedge_kernel_tensor"]
         Ce = batch["coedges_of_edges"]
-        Cf = batch["coedges_of_faces_tensor"]
-        Csf = batch["coedges_of_single_faces"]
+        Cf = batch["coedges_of_small_faces"]
+        Csf = batch["coedges_of_big_faces"]
 
         # Make the forward pass through the network
         # The tensor logits is now size [ num_faces_in_batch x num_classes ]
         segmentation_scores = self(Xf, Xe, Xc, Kf, Ke, Kc, Ce, Cf, Csf)
 
         # Now find the loss
-        labels = batch["all_batch_face_labels"]
+        labels = batch["labels"]
         loss = self.find_loss(segmentation_scores, labels)
 
         # Find the network predictions
@@ -510,18 +561,22 @@ class BRepNet(LightningModule):
             "per_class_unions": per_class_unions
         }
 
-        # Log some data to tensorboard
-        tensorboard_logs = {
-            "train/loss": loss,
-            "train/accuracy": accuracy
-        }
-        
         return {
             "loss": loss,
-            "iou_data": iou_data,
-            "log": tensorboard_logs
+            "accuracy": accuracy,
+            "iou_data": iou_data
         }
         
+
+    def training_step(self, batch, batch_idx):
+        output = self.brepnet_step(batch, batch_idx)
+                
+        # Log some data to tensorboard
+        self.log("loss", output["loss"].item(), on_step=True, on_epoch=False)
+        self.log("train/loss", output["loss"].item(), on_step=False, on_epoch=True, sync_dist=True, prog_bar=False)
+        self.log("train/accuracy", output["accuracy"], on_step=False, on_epoch=True, sync_dist=True, prog_bar=False)
+        return output["loss"]
+
 
     def validation_step(self, batch, batch_idx):
         """
@@ -529,22 +584,15 @@ class BRepNet(LightningModule):
         Here we call the training step and then rename the 
         keys so the logs are correct
         """
-        output = self.training_step(batch, batch_idx)
-
-        # Rename the keys so it's clear this is the validation set
-        output["log"]["validation/loss"] = output["log"]["train/loss"]
-        del output["log"]["train/loss"]
-        output["log"]["validation/accuracy"] = output["log"]["train/accuracy"]
-        del output["log"]["train/accuracy"]
-        output["val_loss"] = output["loss"]
-        del output["loss"]
+        output = self.brepnet_step(batch, batch_idx)
+        self.log("validation/loss", output["loss"].item(), on_step=False, on_epoch=True, sync_dist=True, prog_bar=False)
         return output
 
-    def validation_epoch_end(self, outputs):
+
+    def collate_epoch_outputs(self, outputs):
         """
-        Collate information from all validation batches
+        Collate information from all batches at the end of an epoch
         """
-        avg_loss = torch.stack([x['val_loss'] for x in outputs]).mean()
         num_faces_correct = 0
         total_num_faces = 0
         per_class_intersections = [0.0] * self.opts.num_classes
@@ -569,63 +617,140 @@ class BRepNet(LightningModule):
 
         accuracy = num_faces_correct / total_num_faces
         mean_iou /= self.opts.num_classes
-        tensorboard_logs = {
-            "validation/accuracy": accuracy,
-            "validation/loss": avg_loss,
-            "validation/mean_iou": mean_iou
+        return {
+            "accuracy": accuracy,
+            "mean_iou": mean_iou,
+            "per_class_iou": per_class_iou
         }
 
-        return {'val_loss': avg_loss, 'log': tensorboard_logs}
 
+    def validation_epoch_end(self, outputs):
+        """
+        Collate information from all validation batches
+        """
+        output = self.collate_epoch_outputs(outputs)
+        self.log("validation/accuracy", output["accuracy"], on_step=False, on_epoch=True, sync_dist=True, prog_bar=False)
+        self.log("validation/mean_iou", output["mean_iou"], on_step=False, on_epoch=True, sync_dist=True, prog_bar=False)
+
+        # If the segment names information is provided then log the 
+        # per-class IoU
+        if self.segment_names is not None:
+            assert len(self.segment_names) == len(output["per_class_iou"])
+            for name, iou in zip(self.segment_names, output["per_class_iou"]):
+                log_name = f"validation/{name}_iou"
+                self.log(log_name, iou, on_step=False, on_epoch=True, sync_dist=True, prog_bar=False)
 
     def test_step(self, batch, batch_idx):
         """
         Test on one batch
         """
-        return self.validation_step(batch, batch_idx)
+        return self.brepnet_step(batch, batch_idx)
                 
 
-    def test_epoch_end(self, output_results):
+    def test_epoch_end(self, outputs):
         """
         Collate the results from all test batches
         """
-        output = self.validation_epoch_end(output_results)
+        output = self.collate_epoch_outputs(outputs)
 
-        # Rename the keys so it's clear this is the test set
-        del output["log"]["validation/loss"]
-        del output["val_loss"]
+        self.log("test/accuracy", output["accuracy"], on_step=False, on_epoch=True, sync_dist=True, prog_bar=False)
+        self.log("test/mean_iou", output["mean_iou"], on_step=False, on_epoch=True, sync_dist=True, prog_bar=False)
 
-        output["log"]["test/accuracy"] = output["log"]["validation/accuracy"]
-        del output["log"]["validation/accuracy"]
-        output["log"]["test/mean_iou"] = output["log"]["validation/mean_iou"]
-        del output["log"]["validation/mean_iou"]
+        # If the segment names information is provided then log the 
+        # per-class IoU
+        per_class_iou = {}
+        if self.segment_names is not None:
+            assert len(self.segment_names) == len(output["per_class_iou"])
+            for name, iou in zip(self.segment_names, output["per_class_iou"]):
+                log_name = f"test/{name}_iou"
+                self.log(log_name, iou, on_step=False, on_epoch=True, sync_dist=True, prog_bar=False)
+                per_class_iou[name] = iou
+            output["per_class_iou"] = per_class_iou
         return output
 
 
     def train_dataloader(self):
+        if self.opts.use_old_dataloader:
+            # Legacy dataloader for json data extracted with 
+            # proprietary code  
+            dataset = BRepNetDatasetOld(self.opts, "training_set")
+            return torch.utils.data.DataLoader(
+                dataset,
+                batch_size=None  # Solids are organized into fixed batches
+            )
+
+        # Dataloader to read from open source based pipeline
         dataset = BRepNetDataset(self.opts, "training_set")
+
+        batch_sampler = None
+        shuffle = self.opts.shuffle_train_set
+        batch_size = self.opts.batch_size
+        if self.opts.max_num_faces_per_batch is not None:
+            print("Warning! - max_num_faces_per_batch option may not work with multi-gpu or multi-node training")
+            batch_sampler = MaxNumFacesSampler(dataset, self.opts.max_num_faces_per_batch)
+
+            if shuffle:
+                print("Warning! - Overriding shuffle option")
+            shuffle = False
+
+            if batch_size != 1:
+                print("Warning! - Overriding batch_size option")
+            batch_size = 1
+
         return torch.utils.data.DataLoader(
-            dataset, 
-            batch_size=None, # Batches are pre-defined inside the dataset file
-            num_workers=self.opts.workers
+            dataset,
+            collate_fn=brepnet_collate_fn,
+            batch_sampler=batch_sampler,
+            batch_size=batch_size,
+            num_workers=self.opts.num_workers,
+            shuffle=shuffle
         )
 
 
     def val_dataloader(self):
+        if self.opts.use_old_dataloader:
+            # Legacy dataloader for json data extracted with 
+            # proprietary code  
+            dataset = BRepNetDatasetOld(self.opts, "validation_set")
+            return torch.utils.data.DataLoader(
+                dataset,
+                batch_size=None  # Solids are organized into fixed batches
+            )
+
+        # Dataloader to read from open source based pipeline
         dataset = BRepNetDataset(self.opts, "validation_set")
         return torch.utils.data.DataLoader(
-            dataset, 
-            batch_size=None, # Batches are pre-defined inside the dataset file
-            num_workers=self.opts.workers
+            dataset,
+            collate_fn=brepnet_collate_fn,
+            batch_size=self.opts.batch_size,
+            num_workers=self.opts.num_workers
         )
 
 
     def test_dataloader(self):
-        dataset = BRepNetDataset(self.opts, "test_set")
+        val_or_test = "test_set"
+
+        # Do we want to evaluate the model using the 
+        # validation set of the held out test set?
+        if self.opts.test_with_validation_set is not None:
+            if self.opts.test_with_validation_set:
+                val_or_test = "validation_set"
+
+        if self.opts.use_old_dataloader:
+            # Legacy dataloader for json data extracted with 
+            # proprietary code  
+            dataset = BRepNetDatasetOld(self.opts, val_or_test)
+            return torch.utils.data.DataLoader(
+                dataset,
+                batch_size=None  # Solids are organized into fixed batches
+            )
+
+        dataset = BRepNetDataset(self.opts, val_or_test)
         return torch.utils.data.DataLoader(
-            dataset, 
-            batch_size=None, # Batches are pre-defined inside the dataset file
-            num_workers=self.opts.workers
+            dataset,
+            collate_fn=brepnet_collate_fn,
+            batch_size=self.opts.batch_size,
+            num_workers=self.opts.num_workers
         )
 
 

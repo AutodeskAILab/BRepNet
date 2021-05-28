@@ -1,0 +1,2488 @@
+{
+    "feature_data": {
+        "face_features": [
+            {
+                "entity": 0,
+                "features": [
+                    {
+                        "feature_name": "Plane",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Cylinder",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Cone",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "SphereFaceFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "TorusFaceFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "FaceAreaFeature",
+                        "feature_value": 0.12566370614359196
+                    },
+                    {
+                        "feature_name": "RationalNurbsFaceFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 1,
+                "features": [
+                    {
+                        "feature_name": "Plane",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Cylinder",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Cone",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "SphereFaceFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "TorusFaceFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "FaceAreaFeature",
+                        "feature_value": 0.12566370614359196
+                    },
+                    {
+                        "feature_name": "RationalNurbsFaceFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 2,
+                "features": [
+                    {
+                        "feature_name": "Plane",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Cylinder",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Cone",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "SphereFaceFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "TorusFaceFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "FaceAreaFeature",
+                        "feature_value": 0.07999999999999996
+                    },
+                    {
+                        "feature_name": "RationalNurbsFaceFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 3,
+                "features": [
+                    {
+                        "feature_name": "Plane",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Cylinder",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Cone",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "SphereFaceFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "TorusFaceFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "FaceAreaFeature",
+                        "feature_value": 0.07999999999999996
+                    },
+                    {
+                        "feature_name": "RationalNurbsFaceFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 4,
+                "features": [
+                    {
+                        "feature_name": "Plane",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Cylinder",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Cone",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "SphereFaceFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "TorusFaceFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "FaceAreaFeature",
+                        "feature_value": 0.059999999999999984
+                    },
+                    {
+                        "feature_name": "RationalNurbsFaceFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 5,
+                "features": [
+                    {
+                        "feature_name": "Plane",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Cylinder",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Cone",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "SphereFaceFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "TorusFaceFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "FaceAreaFeature",
+                        "feature_value": 0.07999999999999996
+                    },
+                    {
+                        "feature_name": "RationalNurbsFaceFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 6,
+                "features": [
+                    {
+                        "feature_name": "Plane",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Cylinder",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Cone",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "SphereFaceFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "TorusFaceFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "FaceAreaFeature",
+                        "feature_value": 0.07999999999999999
+                    },
+                    {
+                        "feature_name": "RationalNurbsFaceFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 7,
+                "features": [
+                    {
+                        "feature_name": "Plane",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Cylinder",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Cone",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "SphereFaceFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "TorusFaceFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "FaceAreaFeature",
+                        "feature_value": 0.3999999999999999
+                    },
+                    {
+                        "feature_name": "RationalNurbsFaceFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 8,
+                "features": [
+                    {
+                        "feature_name": "Plane",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Cylinder",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Cone",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "SphereFaceFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "TorusFaceFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "FaceAreaFeature",
+                        "feature_value": 0.737168146928204
+                    },
+                    {
+                        "feature_name": "RationalNurbsFaceFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 9,
+                "features": [
+                    {
+                        "feature_name": "Plane",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Cylinder",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Cone",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "SphereFaceFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "TorusFaceFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "FaceAreaFeature",
+                        "feature_value": 0.48
+                    },
+                    {
+                        "feature_name": "RationalNurbsFaceFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 10,
+                "features": [
+                    {
+                        "feature_name": "Plane",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Cylinder",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Cone",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "SphereFaceFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "TorusFaceFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "FaceAreaFeature",
+                        "feature_value": 0.72
+                    },
+                    {
+                        "feature_name": "RationalNurbsFaceFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 11,
+                "features": [
+                    {
+                        "feature_name": "Plane",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Cylinder",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Cone",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "SphereFaceFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "TorusFaceFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "FaceAreaFeature",
+                        "feature_value": 0.059999999999999984
+                    },
+                    {
+                        "feature_name": "RationalNurbsFaceFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 12,
+                "features": [
+                    {
+                        "feature_name": "Plane",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Cylinder",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Cone",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "SphereFaceFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "TorusFaceFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "FaceAreaFeature",
+                        "feature_value": 0.8571681469282039
+                    },
+                    {
+                        "feature_name": "RationalNurbsFaceFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 13,
+                "features": [
+                    {
+                        "feature_name": "Plane",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Cylinder",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Cone",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "SphereFaceFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "TorusFaceFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "FaceAreaFeature",
+                        "feature_value": 0.11999999999999997
+                    },
+                    {
+                        "feature_name": "RationalNurbsFaceFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            }
+        ],
+        "edge_features": [
+            {
+                "entity": 0,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 0.6283185307179584
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 1,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 0.6283185307179584
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 2,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 0.6283185307179588
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 3,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 0.6283185307179588
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 4,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 0.3999999999999999
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 5,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 0.2
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 6,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 0.3999999999999999
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 7,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 0.2
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 8,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 0.39999999999999986
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 9,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 0.2
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 10,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 0.39999999999999986
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 11,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 0.09999999999999996
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 12,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 0.6
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 13,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 0.09999999999999996
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 14,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 0.4
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 15,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 0.3999999999999999
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 16,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 0.2
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 17,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 0.3999999999999999
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 18,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 0.2
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 19,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 0.4
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 20,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 0.4
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 21,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 0.2
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 22,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 1.9999999999999998
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 23,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 1.9999999999999998
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 24,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 1.2
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 25,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 1.2
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 26,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 0.4
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 27,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 1.2
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 28,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 1.2
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 29,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 0.6
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 30,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 0.09999999999999996
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 31,
+                "features": [
+                    {
+                        "feature_name": "Concave edge",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "Convex edge",
+                        "feature_value": 1.0
+                    },
+                    {
+                        "feature_name": "Smooth",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EdgeLengthFeature",
+                        "feature_value": 0.09999999999999996
+                    },
+                    {
+                        "feature_name": "CircularEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "ClosedEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "EllipticalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "HelicalEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "IntcurveEdgeFeature",
+                        "feature_value": 0.0
+                    },
+                    {
+                        "feature_name": "StraightEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            }
+        ],
+        "coedge_features": [
+            {
+                "entity": 0,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 1,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 2,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 3,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 4,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 5,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 6,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 7,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 8,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 9,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 10,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 11,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 12,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 13,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 14,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 15,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 16,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 17,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 18,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 19,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 20,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 21,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 22,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 23,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 24,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 25,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 26,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 27,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 28,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 29,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 30,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 31,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 32,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 33,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 34,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 35,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 36,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 37,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 38,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 39,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 40,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 41,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 42,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 43,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 44,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 45,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 46,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 47,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 48,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 49,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 50,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 51,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 52,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 53,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 54,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 55,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 56,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 57,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 58,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 59,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 60,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 61,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            },
+            {
+                "entity": 62,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 1.0
+                    }
+                ]
+            },
+            {
+                "entity": 63,
+                "features": [
+                    {
+                        "feature_name": "ReversedCoEdgeFeature",
+                        "feature_value": 0.0
+                    }
+                ]
+            }
+        ]
+    }
+}

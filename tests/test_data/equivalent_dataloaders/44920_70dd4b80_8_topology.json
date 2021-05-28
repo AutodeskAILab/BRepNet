@@ -1,0 +1,207 @@
+{
+    "version": "911add8b4c12315d4a9934f948e687a28c122778",
+    "topology": {
+        "faces": [
+            {
+                "loops": [
+                    0,
+                    1
+                ]
+            },
+            {
+                "loops": [
+                    2,
+                    3
+                ]
+            },
+            {
+                "loops": [
+                    4,
+                    5
+                ]
+            },
+            {
+                "loops": [
+                    6,
+                    7
+                ]
+            }
+        ],
+        "edges": [
+            {
+                "coedges": [
+                    0,
+                    1
+                ],
+                "vertices": [
+                    0
+                ]
+            },
+            {
+                "coedges": [
+                    2,
+                    3
+                ],
+                "vertices": [
+                    1
+                ]
+            },
+            {
+                "coedges": [
+                    4,
+                    5
+                ],
+                "vertices": [
+                    2
+                ]
+            },
+            {
+                "coedges": [
+                    6,
+                    7
+                ],
+                "vertices": [
+                    3
+                ]
+            }
+        ],
+        "loops": [
+            {
+                "coedges": [
+                    0
+                ],
+                "face": 0
+            },
+            {
+                "coedges": [
+                    2
+                ],
+                "face": 0
+            },
+            {
+                "coedges": [
+                    4
+                ],
+                "face": 1
+            },
+            {
+                "coedges": [
+                    6
+                ],
+                "face": 1
+            },
+            {
+                "coedges": [
+                    1
+                ],
+                "face": 2
+            },
+            {
+                "coedges": [
+                    5
+                ],
+                "face": 2
+            },
+            {
+                "coedges": [
+                    3
+                ],
+                "face": 3
+            },
+            {
+                "coedges": [
+                    7
+                ],
+                "face": 3
+            }
+        ],
+        "coedges": [
+            {
+                "loop": 0,
+                "edge": 0,
+                "next": 0,
+                "previous": 0,
+                "partner": 1
+            },
+            {
+                "loop": 4,
+                "edge": 0,
+                "next": 1,
+                "previous": 1,
+                "partner": 0
+            },
+            {
+                "loop": 1,
+                "edge": 1,
+                "next": 2,
+                "previous": 2,
+                "partner": 3
+            },
+            {
+                "loop": 6,
+                "edge": 1,
+                "next": 3,
+                "previous": 3,
+                "partner": 2
+            },
+            {
+                "loop": 2,
+                "edge": 2,
+                "next": 4,
+                "previous": 4,
+                "partner": 5
+            },
+            {
+                "loop": 5,
+                "edge": 2,
+                "next": 5,
+                "previous": 5,
+                "partner": 4
+            },
+            {
+                "loop": 3,
+                "edge": 3,
+                "next": 6,
+                "previous": 6,
+                "partner": 7
+            },
+            {
+                "loop": 7,
+                "edge": 3,
+                "next": 7,
+                "previous": 7,
+                "partner": 6
+            }
+        ],
+        "vertices": [
+            {
+                "point3": {
+                    "x": -0.49999999999999997,
+                    "y": 0.19999999999999999,
+                    "z": 6.123233995736766e-17
+                }
+            },
+            {
+                "point3": {
+                    "x": -0.49999999999999997,
+                    "y": -0.19999999999999999,
+                    "z": 6.123233995736766e-17
+                }
+            },
+            {
+                "point3": {
+                    "x": -0.9999999999999999,
+                    "y": 0.19999999999999999,
+                    "z": 1.2246467991473533e-16
+                }
+            },
+            {
+                "point3": {
+                    "x": -0.9999999999999999,
+                    "y": -0.19999999999999999,
+                    "z": 1.2246467991473533e-16
+                }
+            }
+        ]
+    }
+}

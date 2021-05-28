@@ -1,7 +1,162 @@
+"""
+The standard dataloader for BRepNet.
+
+For each BRep model the following tensors are created.
+
+    Xf - The face features
+
+        A tensor of size [ num_faces x num_face_features ]
+
+         These correspond to the feature data extracted from faces.  
+         See BRepNetExtractor.extract_face_features_from_body() in
+         pipeline/extract_brepnet_data_from_step.py for details of how the 
+         values are computed.  
+
+         The values will be standardized based on information from the 
+         dataset file.
+
+         The faces are not in the same order as they are in Open Cascade.
+         For a batch of data you must use 
+         
+           Xf[split_batch[solid_index]["face_indices"]] 
+           
+         to restore these to their original order. 
+
+    Xe - The edge features
+
+        A tensor of size [ num_edges x num_edge_features ]
+
+         See BRepNetExtractor.extract_edge_features_from_body() in
+         pipeline/extract_brepnet_data_from_step.py for details of how the 
+         values are computed.  
+
+    Xc - The coedge features
+
+         A tensor of size [ num_coedges x num_coedge_features ]
+
+         See BRepNetExtractor.extract_coedge_features_from_body() in
+         pipeline/extract_brepnet_data_from_step.py for details of how the 
+         values are computed.  
+
+    Kf - The face kernel tensor
+
+         This is an index tensor of size [ num_coedges x num_faces_in_kernel ]
+
+         For every coedge in the model the kernel will include some number of
+         nearby faces whos hidden states will be combined in the convolution.
+
+         This tensor contains the indices of these faces as they are in the
+         Xf array.  
+
+    Ke - The edge kernel tensor
+
+         This is an index tensor of size [ num_coedges x num_edges_in_kernel ]
+
+         For every coedge in the model the kernel will include some number of
+         nearby edges whos hidden states will be combined in the convolution.
+
+         This tensor contains the indices of these edges. 
+
+    Kc - The coedge kernel tensor
+
+         This is an index tensor of size [ num_coedges x num_coedges_in_kernel ]
+
+         For every coedge in the model the kernel will include some number of
+         nearby coedges whos hidden states will be combined in the convolution.
+
+         This tensor contains the indices of these coedges. 
+
+    Ce - The coedges of edges tensor
+
+         This is an index tensor of size [ num_edges x 2]
+
+         For every edge in the model, this tensor contains the indices
+         of its two child coedges.
+
+         The tensor is required to perform pooling of coedge hidden
+         states onto the parent edges
+
+    Cf - The coedges of "small" faces tensor
+
+         There can be any arbitrary number of coedges around a single face.
+         When we perform pooling of the coedge hidden states into faces we
+         need to know which coedges are in the loops around each face.
+
+         This information is split into two sets of tensors.  For faces with 
+         less than max_coedges_per_face coedges on each face, the indices are
+         written into the Cf index tensor with size
+
+         [ num_small_faces x max_coedges_per_face ]
+
+         A special "padding" index which is equal to the number of coedges in 
+         the model is used for faces which have less than max_coedges_per_face
+         coedges around the face.
+
+         The faces in the model get re-ordered so that the faces with less
+         than max_coedges_per_face coedges per face come before
+         the other faces.
+
+    Csf - The coedges of "large" faces
+         
+         For faces which have more than max_coedges_per_face around them
+         the indices are stored in an array
+          
+            Csf = [
+                Csf.size() = [ num_coedges_in_face_1 ],
+                Csf.size() = [ num_coedges_in_face_2 ],
+                ...
+            ]
+
+        In models/brepnet.py find_max_feature_vectors_for_each_face()
+        the Cf and Csf index tensors get used for the max pooling operation.
+
+        Notice that the re-ordering of the faces in Xf and Kf allows the new
+        hidden states to be efficiently computed by concatenating tensors.
+
+    labels - These are the segment indices for each face
+
+       Notice that these are also re-ordered as described above. 
+
+       Use labels[split_batch[solid_index]["face_indices"]] to extract
+       the labels in the order of the faces in Open Cascade
+
+    file_stem - This tells you the stem of the filename of each solid in the 
+                batch
+
+
+Splitting batches
+
+BRepNet processes multiple solids in batches.  brepnet_collate_fn()
+does the job of combining multiple solids into batches and keeps track
+of how the faces, edges and coedges of each solid were combined into the
+tensors for the batch.  This information is contained in the split_batch
+array.
+
+For each solid in the batch, split_batch contains the indices in the batch 
+which must be accessed to understand the logits for faces, edges and coedges
+
+
+
+split_batch = [
+    {
+        "face_indices":  [ num_faces_for_solid_1],
+        "edge_indices": [ num_edges_for_solid_1],
+        "coedge_indices" [ num_coedges_for_solid_1]:
+    },
+    ...
+]
+
+Given some logits for the batch they can be decoded like this
+
+face_logits_for_solid_1 = face_logits_for_batch[split_batch[1]["face_indices"]]
+
+"""
+
 import torch
 from torch.utils.data import Dataset
 from pathlib import Path
 import math
+import numpy as np
 import hashlib
 import copy
 import pickle
@@ -9,13 +164,13 @@ import pickle
 import utils.data_utils as data_utils
 
 class BRepNetDataset(Dataset):
-    """Dataset of BRepNet data"""
-        
+    """
+    Dataset which loads the processed step data generated by
+    pipeline/extract_brepnet_data_from_step.py
+    """
+
     def __init__(self, opts, train_val_or_test):
-        """
-        Construct the dataset from the given options
-        """
-        super(BRepNetDataset).__init__()
+        super(BRepNetDataset, self).__init__()
         self.opts = opts
 
         # Load the topological walks in to be used in the kernel
@@ -28,38 +183,32 @@ class BRepNetDataset(Dataset):
         # feature normalization information
         dataset_info = data_utils.load_json_data(self.opts.dataset_file)
 
-        self.batches = dataset_info[train_val_or_test]["batches"]
-        self.feature_normalization = dataset_info["feature_normalization"]
-        self.root_dir = Path(self.opts.dataset_dir)
+        self.bodies = dataset_info[train_val_or_test]
+        self.feature_standardization = dataset_info["feature_standardization"]
+        self.dataset_dir = Path(self.opts.dataset_dir)
+        self.label_dir = self.find_label_dir(opts)
+        self.cache_dir = self.create_cache_dir(self.dataset_dir)
 
-        # The cache dir contains a binary copy of all the data.
-        # we make sure that different hyper-parameters generate
-        # different cache files as appropriate.
-        # Using the cache gives a massive speedup when training 
-        # the network
-        self.cache_dir = self.root_dir / "cache"
-        if not self.cache_dir.exists():
-            self.cache_dir.mkdir()
-        
 
     def __len__(self):
         """
-        The dataloader returns the dataset already divided into
-        mini-batches.
+        Get the number of bodies in the dataset
         """
-        return len(self.batches)
+        return len(self.bodies)
 
-    def __getitem__(self, batch_idx):
+
+    def __getitem__(self, idx):
         """
-        Load a batch of data.  Use a cache if its there.  
+        Load the data for a body.  Use a cache if its there.  
         Cache the binary data if not.
         """ 
-        cache_pathname = self.get_cache_pathname(batch_idx)
+        assert idx < len(self.bodies)
+        cache_pathname = self.get_cache_pathname(idx)
         if cache_pathname.exists():
-            batch = self.load_batch_from_cache(cache_pathname)
+            body_data = self.load_body_from_cache(cache_pathname)
         else:
-            batch = self.load_and_cache_batch(batch_idx, cache_pathname)
-        return batch
+            body_data = self.load_and_cache_body(idx, cache_pathname)
+        return body_data
 
 
     def hash_strings_in_list(self, string_list):
@@ -72,14 +221,14 @@ class BRepNetDataset(Dataset):
         return hashlib.sha224(single_str).hexdigest()
 
 
-    def hash_data_for_batch(self, batch_basenames):
+    def hash_data_for_body(self, body_filestem):
         """
         We want to be sure that the cache is correctly built given
         all the hyper-parameters of the network.
         Here we make a hash of these hyper-parameters and 
         use this as the pathname for the cache
         """
-        string_list = copy.deepcopy(batch_basenames)
+        string_list = [ body_filestem ]
         for ent in self.kernel:
             for walk in self.kernel[ent]:
                 string_list.append(walk)
@@ -90,698 +239,659 @@ class BRepNetDataset(Dataset):
                 string_list.append(feature)
         return self.hash_strings_in_list(string_list)
 
-    def get_cache_pathname(self, batch_idx):
+
+    def get_cache_pathname(self, idx):
         """
-        Create a pathname for the cache file for the batch with 
-        batch_idx
+        Create a pathname for the cache file for the batch with idx
         """
-        batch_basenames = self.batches[batch_idx]
-        hstring = self.hash_data_for_batch(batch_basenames)
+        body_filestem = self.bodies[idx]
+        hstring = self.hash_data_for_body(body_filestem)
         return (self.cache_dir/hstring).with_suffix(".p")
 
+    
+    def cache_body(self, cache_pathname, data):
+        """
+        Save the cache data for the body
+        """
+        torch.save(data, cache_pathname)
 
 
-    def save_batch_cache(self, cache_pathname, data):
+    def load_body_from_cache(self, cache_pathname):
         """
-        Save the cache data for the batch
+        Load cache data for the body with the given pathname
         """
-        fh = open(cache_pathname, "wb")
-        pickle.dump(data, fh)
-        fh.close()
+        return torch.load(cache_pathname)
 
-    def load_batch_from_cache(self, cache_pathname):
-        """
-        Load cache data for the batch with the given pathname
-        """
-        fh = open(cache_pathname,"rb")
-        data = pickle.load(fh)
-        fh.close()
-        return data
 
-    def load_and_cache_batch(self, batch_idx, cache_pathname):
+    def load_and_cache_body(self, idx, cache_pathname):
         """
-        Load the batch with batch_idx from the
-        raw json data, then save a cache of the 
+        Load the body with idx from the
+        STEP data, then save a cache of the 
         binary tensors
         """
-        batch_data = self.load_batch(batch_idx)
-        self.cache_batch(cache_pathname, batch_data)
-        return batch_data
+        body_data = self.load_body(idx)
+        self.cache_body(cache_pathname, body_data)
+        return body_data
 
 
-    def load_feature_data(self, basename):
+    def create_cache_dir(self, dataset_dir):
+        cache_dir = dataset_dir / "cache"
+        if not cache_dir.exists():
+            cache_dir.mkdir()
+        assert cache_dir.exists(), "Check we were able to create the cache dir"
+        return cache_dir
+
+
+    def find_label_dir(self, opts):
         """
-        Load feature file
+        Try to locate the dir where the labels are stored if this is not
+        given explicitely 
         """
-        feature_data_pathname = self.root_dir / (basename+"_features.json")
-        return data_utils.load_json_data(feature_data_pathname)
+        if opts.label_dir:
+            return Path(opts.label_dir)
+
+        assert len(self.bodies) > 0
+        first_file_stem = self.bodies[0]
+        dataset_dir = Path(opts.dataset_dir)
+
+        # Look for the seg files in the same folder as the others
+        cadidate_label_file = dataset_dir / (first_file_stem + ".seg")
+        if cadidate_label_file.exists():
+            print(f"Using labels from {dataset_dir}")
+            return dataset_dir
+
+        # When using the Fusion Gallery segmentation dataset from the  
+        # quickstart script, the seg files in the path 
+        # s2.0.0/breps/seg and the dataset folder will be
+        # s2.0.0/processed
+        seg_dir = dataset_dir.parent / "breps/seg"
+        cadidate_label_file = seg_dir / (first_file_stem + ".seg")
+        if cadidate_label_file.exists():
+            print(f"Using labels from {seg_dir}")
+            return seg_dir
+
+        print("Error!  Failed to find any label files.")
+        print("These files should have the extension .seg and contain the")
+        print("segment index for each face in each brep")
+        print(" ")
+        print("You can use the --label_dir option to point the model at the appropriate folder")
+        assert False, "Failed to locate labels (seg files)"
 
 
-    def load_topology_file(self, basename):
+    def load_body(self, idx):
         """
-        Load the topology file
+        Load the data for a body.  
         """
-        topology_pathname = self.root_dir / (basename + "_topology.json")
-        return data_utils.load_json_data(topology_pathname)
+        assert idx < len(self.bodies)
+        file_stem = self.bodies[idx]
+        npz_pathname = self.dataset_dir / (file_stem + ".npz")
+        body_data = data_utils.load_npz_data(npz_pathname)
+        Xf, Xe, Xc = self.build_input_feature_tensors(body_data)
+        Kf, Ke, Kc = self.build_kernel_tensors(body_data)
+
+        # We need to rearrange the order of the faces so that
+        # faces with more than max_coedges_per_face are at the 
+        # end of the array
+        max_coedges_per_face = 30
+        Ce = self.build_coedges_of_edges_tensor(body_data)
+
+        Cf, Csf, new_to_old_face_indices = self.build_coedges_of_faces_tensor(
+            body_data, 
+            max_coedges_per_face         
+        )
+
+        old_to_new_face_indices = self.find_inverse_permutation(new_to_old_face_indices)
+
+        Kf_perm = old_to_new_face_indices[Kf]
+        Xf_perm = Xf[new_to_old_face_indices]
+
+        labels = self.load_labels(file_stem)
+        labels_perm = labels[new_to_old_face_indices]
+
+        data = {
+            "face_features": Xf_perm,
+            "edge_features": Xe,
+            "coedge_features": Xc,
+            "face_kernel_tensor": Kf_perm,
+            "edge_kernel_tensor": Ke,
+            "coedge_kernel_tensor": Kc,
+            "coedges_of_edges": Ce,
+            "coedges_of_small_faces": Cf,
+            "coedges_of_big_faces": Csf,
+            "labels": labels_perm,
+            "old_to_new_face_indices": old_to_new_face_indices,
+            "file_stem": file_stem
+        }
+        return data
+
+    def build_kernel_tensors(self, body_data):
+        n = body_data["coedge_to_next"]
+        m = body_data["coedge_to_mate"]
+        e = body_data["coedge_to_edge"]
+        f = body_data["coedge_to_face"]
+
+        # The permutation array n, m, e and f have the following meanings
+        # For a coedge with index c:
+        #   The next coedge around the loop is n[c]
+        #   The mating coedge is m[c]
+        #   The index of the parent edge is e[c]
+        #   The index of the parent face is f[c]
+
+        # All these arrays should have the same size. i.e. the number of coedges 
+        # in the body
+        num_coedges = n.size
+        assert num_coedges == m.size
+        assert num_coedges == e.size
+        assert num_coedges == f.size
+
+        # Now we need to recover the permutation p with the meaning
+        # p[c] is index of the previous coedge in the loop to the 
+        # coedge with index c.   This is a little like finding the
+        # inverse (also the transpose) of a permutation matrix.
+        p = self.find_inverse_permutation(n)
+
+        # Now we can build the kernel tensors for the faces, edges and coedges
+        Kf = self.build_kernel_tensor_from_topology(n, p, m, e, f, self.kernel["faces"])
+        Ke = self.build_kernel_tensor_from_topology(n, p, m, e, f, self.kernel["edges"])
+        Kc = self.build_kernel_tensor_from_topology(n, p, m, e, f, self.kernel["coedges"])
+
+        return Kf, Ke, Kc
 
 
-    def load_face_label_file(self, basename):
+    def build_input_feature_tensors(self, body_data):
         """
-        Load face label file
+        Convert the feature tensors for faces, edges and coedges
+        from numpy to pytorch
         """
-        label_file_pathname = self.root_dir / ( basename+"_labels.json")
-        return data_utils.load_json_data(label_file_pathname)
+        Xf = torch.from_numpy(body_data["face_features"])
+        Xe = torch.from_numpy(body_data["edge_features"])
+        Xc = torch.from_numpy(body_data["coedge_features"])
+
+        Xf = self.standardize_features(
+            Xf, 
+            self.feature_standardization["face_features"]
+        )
+        Xe = self.standardize_features(
+            Xe, 
+            self.feature_standardization["edge_features"]
+        )
+        Xc = self.standardize_features(
+            Xc, 
+            self.feature_standardization["coedge_features"]
+        )
+
+        return Xf, Xe, Xc
 
 
-    def	build_kernel_tensor_from_top(self, topology, kernel):
+    def standardize_features(self, feature_tensor, stats):
+        num_features = len(stats)
+        assert feature_tensor.size(1) == num_features
+        means = torch.zeros(num_features, dtype=feature_tensor.dtype)
+        sds = torch.zeros(num_features, dtype=feature_tensor.dtype)
+        eps = 1e-7
+        for index, s in enumerate(stats):
+            assert s["standard_deviation"] > eps, "Feature has zero standard deviation"
+            means[index] = s["mean"]
+            sds[index] = s["standard_deviation"]
+
+        # We need to broadcast means and sds over the number of entities
+        means.unsqueeze(0)
+        sds.unsqueeze(0)
+        feature_tensor_zero_mean = feature_tensor - means
+        feature_tensor_standadized = feature_tensor_zero_mean / sds
+
+        # Test code to check this works
+        num_ents = feature_tensor.size(0) 
+        test_tensor = torch.zeros((num_ents, num_features), dtype=feature_tensor.dtype)
+        for i in range(num_ents):
+            for j in range(num_features):
+                value = (feature_tensor[i,j] - means[j])/sds[j]
+                test_tensor[i,j] = value
+        assert torch.allclose(feature_tensor_standadized, test_tensor, eps)
+
+        # Convert the tensors to floats after standardization 
+        return feature_tensor_standadized.float()
+
+
+    def	build_kernel_tensor_from_topology(self, n, p, m, e, f, kernel):
         """
         A BRepNet kernel is defined by a list of topological walks.  
         These are used to create the index tensors Kf, Ke and Kc
-        for faces edges and coedges separately.  In this function
-        we build one of Kf, Ke or Kc.
+        for faces edges and coedges separately.  
+        
+        The index tensor Kf, Ke and Kc are essentially permutations
+        on the arrays of coedges.  The BRepNet paper describes these 
+        as permutation matrices,  but actually we don't need a full
+        matrix.
+        
+        This function build the permutations as follows.
 
-        Each walk is a string containing a series of instructions. 
-        We execute the instructions in order to walk over the entities and
-        arrive at the destination.  The index of the destination entity
-        is then added to the index tensor.
+        - We start off with just a list of indices in order
+          [ 0, 1, 2, ...  num_coedges-1]
+
+        - For each entity in the kernel we need to find its index.
+          This will be found by following a topological walk.  
+          The list of instructions in the walk is defined in the kernel.
+          To execute one instruction we simple use the current coedge
+          indices as the index of either the next, previous, mate, 
+          edge or face permutation.  i.e.
+
+          c = n[c]
+
+          will set the permutations in c to c->next()
+
+        - We do this for all the instructions in the walk.
         """
+        # The permutation array n, p, m, e and f have the following meanings
+        # For a coedge with index c:
+        #   The next coedge around the loop is n[c]
+        #   The previous coedge around the loop is p[c]
+        #   The mating coedge is m[c]
+        #   The index of the parent edge is e[c]
+        #   The index of the parent face is f[c]
+        # Each of the arrays n, p, m, e and f should have the same
+        # length.  i.e. the number of coedges in the B-Rep
+        num_coedges = n.size
+        assert num_coedges == p.size
+        assert num_coedges == m.size
+        assert num_coedges == e.size
+        assert num_coedges == f.size
 
         # We want to build an integer tensor of size
         # [ num_coedges x num_entities_in_kernel ]
-        num_coedges = len(topology["coedges"])
-        num_ents_in_kernel = len(kernel)
-        kernel_tensor = torch.LongTensor(num_coedges, num_ents_in_kernel)
+        # We will build this one column at a time
+        kernel_tensor_cols = []
+        for walk_instructions in kernel:
+            # This is like starting with the identity matrix.
+            # The identity permutation is just the indices 
+            # [0, 1, 2, ...] 
+            c = np.arange(num_coedges, dtype=n.dtype)
+ 
+            # Loop over the instructions and execute each one
+            for instruction in walk_instructions:
+                if instruction == "n":
+                    c = n[c]
+                elif instruction == "p":
+                    c = p[c]
+                elif instruction == "m":
+                    c = m[c]
+                elif instruction == "f":
+                    c = f[c]
+                elif instruction == "e":
+                    c = e[c]
+                else:
+                    assert False, "Unknown instruction"
 
-        # Loop over the coedges in the topology
-        for coedge_index, coedge in enumerate(topology["coedges"]):
+            kernel_tensor_col = torch.from_numpy(c.astype(dtype=np.int64))
+            kernel_tensor_cols.append(kernel_tensor_col)
 
-            # Loop over the list of walks.  This is like a loop over the 
-            # faces, edges or coedges which will appear in the kernel
-            for walk_index, walk_instructions in enumerate(kernel):
+        kernel_tensor = torch.transpose(torch.stack(kernel_tensor_cols), 0, 1)
 
-                # Start the walk
-                walked_on_entity = coedge_index
-
-                # Loop over the instructions and execute each one
-                for instruction in walk_instructions:
-                    if instruction == "n":
-                        walked_on_entity = self.get_index_of_next(topology, walked_on_entity)
-                    elif instruction == "p":
-                        walked_on_entity = self.get_index_of_previous(topology, walked_on_entity)
-                    elif instruction == "m":
-                        walked_on_entity = self.get_index_of_mate(topology, walked_on_entity)
-                    elif instruction == "f":
-                        walked_on_entity = self.get_index_of_face(topology, walked_on_entity)
-                    elif instruction == "e":
-                        walked_on_entity = self.get_index_of_edge(topology, walked_on_entity)
-                    else:
-                        assert False, "Unkown instruction"
-                # Now we have completed the walk and arrived at the appropriate
-                # entity we just need to set its index into the index tensor 
-                kernel_tensor[coedge_index, walk_index] = walked_on_entity
+        assert kernel_tensor.size(0) == num_coedges
+        assert kernel_tensor.size(1) == len(kernel)
         return kernel_tensor
 
+    def find_face_permutation(self, body_data, max_coedges_per_face):
+        """
+        We will need to rearrange the array of faces so that 
+        faces with more than max_coedges_per_face coedges 
+        appear at the end of the faces array
+        """
+        num_faces = body_data["face_features"].shape[0]
+        coedge_to_face = body_data["coedge_to_face"]
+        coedges_per_face = np.bincount(coedge_to_face)
+        small_face_indices = np.where(coedges_per_face <= max_coedges_per_face)[0]
+        big_face_indices = np.where(coedges_per_face > max_coedges_per_face)[0]
+        if small_face_indices.size == 0:
+            face_permutation = big_face_indices
+        elif big_face_indices.size == 0:
+            face_permutation = small_face_indices
+        else:
+            face_permutation = np.concatenate((small_face_indices, big_face_indices))
+        return face_permutation, small_face_indices.size
 
-    def build_coedges_of_faces_tensors(
+
+    def build_coedges_of_edges_tensor(self, body_data):
+        """
+        We want to build an index tensor Ce with 
+
+            Ce.size() = [ num_edges x 2]
+
+        The ith row of Ce contains the indices of the two
+        coedges belonging to the ith parent edge
+        """
+        coedge_to_edge = body_data["coedge_to_edge"]
+        num_edges = body_data["edge_features"].shape[0]
+        coedges_of_edges = [ [] for i in range(num_edges)]
+        for coedge_index, edge_index in enumerate(coedge_to_edge):
+            coedges_of_edges[edge_index].append(coedge_index)
+        
+        for coedges in coedges_of_edges:
+            assert len(coedges) == 1 or len(coedges) == 2
+            if len(coedges) == 1:
+                # OK.  This is the special case of a sphere.  Here
+                # we have two coedges at te poles.  They link to themselves.
+                # As they are only used one each they don't have a second
+                # coedge in the coedges_of_edges array.  We add the same
+                # coedge twice here
+                coedges.append(coedges[0])
+
+        coedges_of_edges = torch.tensor(coedges_of_edges, dtype=torch.int64)
+        return coedges_of_edges
+
+
+    def build_coedges_of_faces_tensor(
             self, 
-            topology, 
-            num_coedges_per_face, 
-            max_coedges, 
-            pad_row
+            body_data,
+            max_coedges_per_face      
         ):
         """
-        Build the index tensor telling which coedges belong 
-        to which face.  As the number of coedges in a face 
-        can vary then we split the tensor into two parts.
-        
-        There will be num_small_faces faces where the 
-        number of coedges is smaller than or equal to
-        max_coedges.
-        
-        There will be num_big_faces where the number of
-        coedges per face is greater than max_coedges
-        
-        coedges_of_faces - size  = [ num_small_faces x  max_coedges ]
-        
-        If a face has less than max_coedges then we make 
-        add the pad_row index to pad out the tensor
-        
-        coedges_of_single_faces
-        An array
-            [
-            [ num_coedges_of_big_face_1 ],
-            [ num_coedges_of_big_face_2 ],
-            .
-            .
-            [ num_coedges_of_big_face_num_big_faces-1 ]
-            ]
-        """
-        num_small_faces = 0
-        for c in num_coedges_per_face:
-            if c <= max_coedges:
-                num_small_faces += 1
+        For faces with less than or equal to max_coedges_per_face we 
+        want to build a tensor
 
-        coedges_of_faces_tensor = torch.LongTensor(num_small_faces, max_coedges)
-        coedges_of_single_faces = []
-        row = 0
-        for i, face in enumerate(topology["faces"]):
-            col = 0
-            if num_coedges_per_face[i] <= max_coedges:
-                for loop_id in face["loops"]:
-                    loop = topology["loops"][loop_id]
-                    for coedge in loop["coedges"]:
-                        coedges_of_faces_tensor[row, col] = coedge
-                        col += 1
-                while col < max_coedges:
-                    coedges_of_faces_tensor[row, col] = pad_row
-                    col += 1
-                row += 1
+        Cf.size() = [ num_small_faces x max_coedges ]
+        
+        The tensor is padded with the index num_coedges.  A row of
+        zeros will be concatenated to the mlp output tensor to allow 
+        this padding to work.
+
+        For faces with more than max_coedges coedges we have
+        an array of tensors of different sizes
+    
+        Csf = [
+            Csf.size() = [ num_coedges_in_face_1 ],
+            ...
+        ]
+        """
+        coedge_to_face = body_data["coedge_to_face"]
+        num_faces = body_data["face_features"].shape[0]
+        num_coedges = coedge_to_face.size
+
+        face_to_coedges = {}
+        for coedge_index, face_index in enumerate(coedge_to_face):
+            if not face_index in face_to_coedges:
+                face_to_coedges[face_index] = []
+            face_to_coedges[face_index].append(coedge_index)
+        
+        small_face_indices = []
+        big_face_indices = []
+        Cf = []
+        Csf = []
+        for face_index in range(num_faces):
+            assert face_index in face_to_coedges
+            assert len(face_to_coedges[face_index]) > 0
+            if len(face_to_coedges[face_index]) > max_coedges_per_face:
+                # This is the case where we have faces with lots of
+                # coedges around them.  We place these long lists of
+                # indices into an index tensor for each face
+                Csf.append(torch.tensor(face_to_coedges[face_index], dtype=torch.int64))
+                big_face_indices.append(face_index)
             else:
-                coedge_ids = []
-                for loop_id in face["loops"]:
-                    loop = topology["loops"][loop_id]
-                    for coedge in loop["coedges"]:
-                        coedge_ids.append(coedge)
-                coedge_tensor = torch.LongTensor(coedge_ids)
-                coedges_of_single_faces.append(coedge_tensor)
-        return coedges_of_faces_tensor, coedges_of_single_faces
+                # This is the case where we have only a small number
+                # of coedges around a face.  We want to build an 
+                # index tensor
+                #
+                # Cf.size() = [ num_small_faces x max_coedges ]
+                # 
+                # with the rows padded with the value 'num_coedges'
+                coedges_of_face = face_to_coedges[face_index]
+
+                # We need to pad the array with the value 'num_coedges'
+                padding_size = max_coedges_per_face - len(coedges_of_face)
+                coedges_of_face.extend([num_coedges] * padding_size)
+
+                # Append the row to the list.  We will stack this once it
+                # has been accumulated
+                Cf.append(torch.tensor(coedges_of_face, dtype=torch.int64))
+                small_face_indices.append(face_index)
+
+        # Stack the rows for the "small faces"
+        Cf = torch.stack(Cf)
+
+        # Finally we need to define a "permutation" index tensor.  We want
+        # re-arrange the face features Xf and and face indices in Kf so that the 
+        # big faces come at the end of the tensors 
+        small_face_indices = torch.tensor(small_face_indices, dtype=torch.int64)
+        big_face_indices = torch.tensor(big_face_indices, dtype=torch.int64)
+        face_permutation = torch.cat([small_face_indices, big_face_indices])
+
+        return Cf, Csf, face_permutation
 
 
-    def build_coedges_of_edges_tensor(self, topology):
+    def load_labels(self, file_stem):
         """
-        Build the index tensor telling us which coedges 
-        belong to a given edge
-        size = [ num_edges x 2 ]
+        Load the segmentation from the seg file
         """
-        num_edges = len(topology["edges"])
-        coedges_of_edges_tensor = torch.LongTensor(num_edges, 2)
-        for i, edge in enumerate(topology["edges"]):
-            assert len(edge["coedges"]) == 2
-            for j, coedge in enumerate(edge["coedges"]):
-                coedges_of_edges_tensor[i,j] = coedge
-        return coedges_of_edges_tensor
-
-    def get_index_of_next(self, topology, coedge_index):
-        """
-        Get the index of the next coedge
-        """
-        coedges = topology["coedges"]
-        assert coedge_index < len(coedges)
-        coedge = coedges[coedge_index]
-        return coedge["next"]
+        label_pathname = self.label_dir / (file_stem + ".seg")
+        face_labels = np.loadtxt(label_pathname, dtype=np.int64)
+        face_labels_tensor = torch.from_numpy(face_labels)
+        if face_labels_tensor.ndim == 0:
+            face_labels_tensor = torch.unsqueeze(face_labels_tensor, 0)
+        return face_labels_tensor
 
 
-    def get_index_of_previous(self, topology, coedge_index):
-        """
-        Get the index of the previous coedge
-        """
-        coedges = topology["coedges"]
-        assert coedge_index < len(coedges)
-        coedge = coedges[coedge_index]
-        return coedge["previous"]
+    def find_inverse_permutation(self, perm):
+        assert perm.ndim == 1
 
+        # We create the identity permutation.  i.e. [0, 1, 2, ...]
+        if isinstance(perm, np.ndarray):
+            identity = np.arange(perm.size, dtype=perm.dtype)
+            inv_perm = np.zeros(perm.size, dtype=perm.dtype)
+        else:
+            assert isinstance(perm, torch.Tensor)
+            identity = torch.arange(end=perm.size(0), dtype=perm.dtype)
+            inv_perm = torch.zeros(perm.size(0), dtype=perm.dtype)
 
-    def get_index_of_mate(self, topology, coedge_index):
-        """
-        Get the index of the mating coedge
-        """
-        coedges = topology["coedges"]
-        assert coedge_index < len(coedges)
-        coedge = coedges[coedge_index]
-        return coedge["partner"]
-
-    def get_index_of_edge(self, topology, coedge_index):
-        """
-        Get the index of the edge
-        """
-        coedges = topology["coedges"]
-        assert coedge_index < len(coedges)
-        coedge = coedges[coedge_index]
-        return coedge["edge"]
-
-    def get_index_of_face(self, topology, coedge_index):
-        """
-        Get the index of the face to which this coedge belongs
-        """
-        coedges = topology["coedges"]
-        loops = topology["loops"]
-        assert coedge_index < len(coedges)
-        coedge = coedges[coedge_index]
-        loop_index = coedge["loop"]
-        loop = loops[loop_index]
-        return loop["face"]
-
-
-    def load_and_cache_batch(self, batch_idx, cache_pathname):
-        """
-        Load data from the json files and generate a binary cache
-        of this information
-        """
-        batch_basenames = self.batches[batch_idx]
-
-        # First we load and standardize the batch
-        batch, batch_face_labels = self.load_batch_and_standardize(batch_basenames)
-
-
-        # Now we create the single dictionary which concatenates all the 
-        # data into a single solid
-        single_batch_solid = self.create_empty_batch_solid()
-
-        for index, data in enumerate(batch):
-            self.concatenate_entities(single_batch_solid, data, index)
-
-        # Concatenate all the batch labels into a single tensor
-        all_batch_face_labels = torch.cat(batch_face_labels)
-
-        # Sort the faces in order of the number of coedges in each face
-        permutation = self.sort_faces_by_num_coedges(single_batch_solid)
-        perm_all_batch_face_labels = all_batch_face_labels[permutation]
-
-        # First build the feature tensors
-        # Xf - face_features 
-        # Xe - edge features
-        # Xc - coedge features
-        feature_data = single_batch_solid["feature_data"]
-        face_features = self.build_feature_tensor(
-            feature_data["face_features"], 
-            self.feature_lists["face_features"]
-        )
-        edge_features = self.build_feature_tensor(
-            feature_data["edge_features"], 
-            self.feature_lists["edge_features"]
-        )
-        coedge_features = self.build_feature_tensor(
-            feature_data["coedge_features"], 
-            self.feature_lists["coedge_features"]
-        )
-
-        # Get the one topology for the entire solid
-        topology = single_batch_solid["topology"]
-
-        # Next we build the kernel tensors for faces, edges and coedges
-        # Kf size [ num_coedges x num_faces_in_kernel ]
-        # Ke size [ num_coedges x num_edges_in_kernel ]
-        # Kc size [ num_coedges x num_coedges_in_kernel ]
-        face_kernel_tensor = self.build_kernel_tensor_from_top(
-            topology, 
-            self.kernel["faces"]
-        )
-        edge_kernel_tensor =  self.build_kernel_tensor_from_top(
-            topology,  
-            self.kernel["edges"]
-        )
-        coedge_kernel_tensor = self.build_kernel_tensor_from_top(
-            topology, 
-            self.kernel["coedges"]
-        )
-
-        # Create the coedges of edges tensor
-        coedges_of_edges = self.build_coedges_of_edges_tensor(topology) 
-
-        # Finally we build the tensors which map the coedges to
-        # their owner faces
-        max_coedges = 30
-        coedges_of_faces_tensor, coedges_of_single_faces = \
-            self.build_coedges_of_faces_tensors(
-                topology, 
-                single_batch_solid["num_coedges_per_face"], 
-                max_coedges, 
-                len(topology["coedges"])
-            )
-
-        face_index_tensors = self.build_face_index_tensors(
-            single_batch_solid["id_lookup"], 
-            batch
-        )
-
-        return {
-            "face_features": face_features,
-            "edge_features": edge_features,
-            "coedge_features": coedge_features, 
-            "face_kernel_tensor": face_kernel_tensor,
-            "edge_kernel_tensor": edge_kernel_tensor, 
-            "coedge_kernel_tensor": coedge_kernel_tensor, 
-            "coedges_of_edges": coedges_of_edges, 
-            "coedges_of_faces_tensor": coedges_of_faces_tensor,
-            "coedges_of_single_faces": coedges_of_single_faces,
-            "all_batch_face_labels": perm_all_batch_face_labels,
-            "face_index_tensors": face_index_tensors
-        }
-
-
-    def standardize_features_for_entity_type(self, feature_data, feature_normalization):
-        """
-        Standardize feature data for faces, edges or coedges
-        """
-        for entity in feature_data:
-            for feature in entity["features"]:
-                mean = feature_normalization[feature["feature_name"]]["mean"]
-                variance = feature_normalization[feature["feature_name"]]["variance"]
-
-                original_value = feature["feature_value"]
-                new_value = original_value-mean
-
-                # Check for very small variation in the feature.
-                # It could be that in a given (small) dataset then all the values
-                # are the same and the feature basically has no value at all
-                if abs(variance) > 1e-7:
-                    new_value /= math.sqrt(variance)
-
-                # Store the Standardized value back in the feature
-                feature["feature_value"] = new_value
-
-
-    def standardize_brep_feature_data(self, feature_data):
-        """
-        Standardize brep feature data
-        """
-        self.standardize_features_for_entity_type(
-            feature_data["face_features"], 
-            self.feature_normalization["face_features"]
-        )
-        self.standardize_features_for_entity_type(
-            feature_data["edge_features"], 
-            self.feature_normalization["edge_features"]
-        )
-        self.standardize_features_for_entity_type(
-            feature_data["coedge_features"], 
-            self.feature_normalization["coedge_features"]
-        )
-
-
-    def load_batch_and_standardize(self, batch_basenames):
-        """
-        Load the data for the batch and apply the normalization
-        """
-        batch = []
-        batch_face_labels = []
-        for basename in batch_basenames:
-            face_label_data_loaded = self.load_face_label_file(basename)
-            num_faces = len(face_label_data_loaded["face_labels"])
-            num_labels_per_face = len(face_label_data_loaded["face_labels"][0]["labels"])
-            face_labels = torch.IntTensor(num_faces, num_labels_per_face)
-
-            for i in range(num_faces):
-                for j in range(num_labels_per_face):
-                    face_labels[i,j] = face_label_data_loaded["face_labels"][i]["labels"][j]["label_value"]
-            
-            segment_indices = torch.argmax(face_labels, dim=1)
-            batch_face_labels.append(segment_indices)
-
-            data_loaded = self.load_feature_data(basename)
-            self.standardize_brep_feature_data(data_loaded["feature_data"])
-
-            # Also load the topology data
-            top_data = self.load_topology_file(basename)
-            data_loaded["topology"] = top_data["topology"]
-
-            batch.append(data_loaded)
-            
-        return batch, batch_face_labels
-
-
-    def create_empty_batch_solid(self):
-        """
-        Create a dictionary which we can contatenate with
-        other data to build up the single solid for the batch 
-        """
-        return {
-            "feature_data": {
-                "face_features": [],
-                "edge_features": [],
-                "coedge_features": []
-            },
-            "id_lookup": {
-                "orig_face_ids": [],
-                "orig_edge_ids": [],
-                "orig_coedge_ids": [],
-                "orig_loop_ids": [],
-                "orig_vertex_ids": []
-            },
-            "topology": {
-                "faces": [],
-                "edges": [],
-                "coedges": [],
-                "loops": [],
-                "vertices": []
-            }
-        }
-
-
-    def build_feature_tensor(self, ent_features, feature_list):
-        """
-        Build feature tensor
-        size = [ num_ents x num_features ]
-        """
-        num_ents = len(ent_features)
-        num_features = len(feature_list)
-        feature_tensor = torch.Tensor(num_ents, num_features)
-        for i, ent in enumerate(ent_features):
-            features = ent["features"]
-            feature_index = 0
-            for j, feature in enumerate(features):
-                feature_name = feature["feature_name"]
-                if feature_name in feature_list:
-                    value = feature["feature_value"]
-                    feature_tensor[i,feature_index] = value
-                    feature_index += 1
-            assert feature_index == num_features
-        return feature_tensor
-
-
-    def find_num_coedges(self, face, topology):
-        """
-        Find the number of coedges on the given face
-        """
-        num_coedges = 0
-        loops = topology["loops"]
-        for loop in face["loops"]:
-            num_coedges += len(loops[loop]["coedges"])
-        return num_coedges
-
-
-    def find_num_coedges_per_face(self, batch_data):
-        """
-        Find the number of coedges on each face
-        """
-        top_data = batch_data["topology"]
-        faces = top_data["faces"]
-        loops = top_data["loops"]
-        num_coedges_per_face = []
-        for face in faces:
-            num_coedges = self.find_num_coedges(face, top_data)
-            num_coedges_per_face.append(num_coedges)
-        return num_coedges_per_face
-
-
-    def sort_faces_by_num_coedges(self, batch_data):
-        """
-        Sort the faces in the batch data by the number of 
-        coedges on each face.  Apply the permutation 
-        to the entirety of the data
-        """
-        num_coedges_per_face = self.find_num_coedges_per_face(batch_data)
-        permutation = sorted(range(len(num_coedges_per_face)), key=lambda k: num_coedges_per_face[k])
+        # Now we know that inv_perm[perm] is the identity.
+        # We can "assign" values of inv_perm[perm] from the 
+        # identity array
+        inv_perm[perm] = identity
+        return inv_perm
         
-        # permutation is a list
-        # [
-        #	index to move to position 0,
-        #	index to move to position 1,
-        #	...
-        # ]
-        #
-        # We also need an index map from old ids to new ids
-        index_map = [ None ] * len(permutation)
-        for new_index, p in enumerate(permutation):
-            index_map[p] = new_index
+def unsqueeze_single_dim_tensors(tensor_list):
+    unsqueezed = []
+    for t in tensor_list:
+        if t.ndim == 1:
+            unsqueezed.append(torch.unsqueeze(t, 0))
+        else:
+            unsqueezed.append(t)
+    return unsqueezed
 
-        # Apply the permutation all the lists
-        old_face_features = batch_data["feature_data"]["face_features"]
-        topology = batch_data["topology"]
+def concatenate_tensor_arrays(small, big, unsqueeze):
+    all = []
+    if unsqueeze:
+        small = unsqueeze_single_dim_tensors(small)
+        big = unsqueeze_single_dim_tensors(big)
+    all.extend(small)
+    all.extend(big)
+    return torch.cat(all)
 
-        new_face_features = []
-        new_top_faces = []
-        perm_orig_face_ids = []
-        perm_num_coedges_per_face = []
+def add_offset_to_face_index(
+        face_indices, 
+        num_small_faces, 
+        small_face_offset, 
+        big_face_offset
+    ):
+    face_index_offset = small_face_offset*(face_indices < num_small_faces)
 
-        for to_index, from_index in enumerate(permutation):
-
-            # Re-order the face features
-            face_feature = old_face_features[from_index]
-            assert face_feature["entity"] == from_index
-            copy_face_feature = copy.deepcopy(face_feature)
-            copy_face_feature["entity"] = to_index
-            new_face_features.append(face_feature)
-
-            # Re-order the faces in the topology
-            face = topology["faces"][from_index]
-            copy_face = copy.deepcopy(face)
-            new_top_faces.append(copy_face)
-
-            # Re-order the original face ids
-            orig_face_id = batch_data["id_lookup"]["orig_face_ids"][from_index]
-            copy_orig_face_id = copy.deepcopy(orig_face_id)
-            perm_orig_face_ids.append(copy_orig_face_id)
-
-            # Re-order the num_coedges_per_face array
-            orig_num_coedges_per_face = num_coedges_per_face[from_index]
-            perm_num_coedges_per_face.append(orig_num_coedges_per_face)
-
-        batch_data["feature_data"]["face_features"] = new_face_features
-        topology["faces"] = new_top_faces
-        batch_data["id_lookup"]["orig_face_ids"] = perm_orig_face_ids
-        batch_data["num_coedges_per_face"] = perm_num_coedges_per_face
-
-        for loop in topology["loops"]:
-            old_face_id = loop["face"]
-            new_face_id = index_map[old_face_id]
-            loop["face"] = new_face_id
+    # The array was re-ordered so that small faces are always before
+    # big faces.
+    # The first big face has index "num_small_faces" are we need to map this to
+    # big_face_offset
+    face_index_offset += (big_face_offset-num_small_faces)*(face_indices >= num_small_faces)
+    return face_indices + face_index_offset
 
 
-        return permutation
+def add_offset_to_coedge_index_with_padding(
+        padded_coedge_indices,
+        pad_value,
+        coedge_index_offset,
+        new_pad_value
+    ):
+    """
+    In the coedges_of_small_faces array we have the indices
+    of coedges with padding at the end of the array.   The 
+    value of the padding in the input tensor is pad_value.
+    We want to change the values of the valid coedge indices 
+    and the padding separately.  The valid values want to 
+    be increased by  `coedge_index_offset`.   The padding
+    needs to be replaced by `new_pad_value`
+    """
+    coedge_index_offset = coedge_index_offset*(padded_coedge_indices != pad_value)
+    coedge_index_offset += (new_pad_value-pad_value)*(padded_coedge_indices == pad_value)
+    return padded_coedge_indices + coedge_index_offset
 
 
-    def location_in_batch(self, entity_id, solid_in_batch):
-        """
-        We need to record what the original batch and id
-        was for each entity
-        """
-        return {
-            "entity_id": entity_id,
-            "solid_in_batch": solid_in_batch
+def brepnet_collate_fn(data_list):
+    """
+    Collate the data from multiple bodies into a single
+    set of tensors.
+    Here I call the faces with a small number of coedges
+    "small faces" and the coedges with a large number of
+    coedges "big faces".
+    """
+    Xf_small_faces = []
+    Xf_big_faces = []
+    labels_small_faces = []
+    labels_big_faces = []
+
+    Xe = []
+    Xc = []
+
+    Ke = [] # Edge indices for each coedge
+    Kc = [] # Coedge indices for each coedge
+
+    Ce = []   # Coedge indices for coedges owned by each edge
+    Csf = []  # Coedge indices for coedges owned by "big faces"
+
+    # Keep track of which file each B-Rep came from
+    file_stems = []
+
+    # Keep track of the data we need to split the batch
+    split_batch = []
+
+    # We need to make two passes through the data.
+    # In the first pass we process things which depend on
+    # coedge index and small faces.  In the second pass
+    # we work on modifying indices which depend on big faces
+    face_offset = 0
+    edge_offset = 0
+    coedge_offset = 0
+
+    for data in data_list:
+        # These are input features.  We just wan to concatentate 
+        # the tensors for each B-Rep
+        num_edges = data["edge_features"].shape[0]
+        Xe.append(data["edge_features"])
+
+        num_coedges = data["coedge_features"].shape[0]
+        Xc.append(data["coedge_features"])
+
+        # For edge and coedge indices things are easy.  We just need to 
+        # add the offsets to the arrays
+        Ke.append(data["edge_kernel_tensor"] + edge_offset)
+        Ce.append(data["coedges_of_edges"] + coedge_offset)
+        Kc.append(data["coedge_kernel_tensor"] + coedge_offset)
+        
+        for single_face_coedges in data["coedges_of_big_faces"]:
+            Csf.append(single_face_coedges + coedge_offset)
+        
+        # Face features are a little more complicated.  We want
+        # to keep the faces with a small number of coedges
+        # at the start of the array and the faces with a large
+        # number of coedges in another array which will get
+        # appended to the end.
+
+        num_small_faces = data["coedges_of_small_faces"].shape[0]
+        num_big_faces = len(data["coedges_of_big_faces"])
+        Xf = data["face_features"]
+        assert num_small_faces + num_big_faces == Xf.shape[0]
+        
+        # We need to slice the face feature tensor
+        Xf_small_faces.append(Xf[:num_small_faces])      
+        Xf_big_faces.extend(Xf[num_small_faces:])
+
+        labels = data["labels"]
+        labels_small_faces.append(labels[:num_small_faces])
+        labels_big_faces.append(labels[num_small_faces:])
+
+        file_stems.append(data["file_stem"])
+
+        split_batch_data_for_brep = {
+            "edge_indices": torch.arange(edge_offset, edge_offset+num_edges, dtype=torch.int64),
+            "coedge_indices": torch.arange(coedge_offset, coedge_offset+num_coedges, dtype=torch.int64)
         }
+        split_batch.append(split_batch_data_for_brep)
 
+        face_offset += num_small_faces
+        edge_offset += num_edges
+        coedge_offset += num_coedges
+    
+    # This is the second pass through the data.  We need to
+    # set the indices of faces in Kf and the new_indices_of_brep_faces
+    # for each face in each B-Rep
+    Kf = []
 
-    def concatenate_entities(self, acc_batch, batch_to_cat, solid_in_batch):
-        """
-        Append all the data from batch_to_cat into acc_batch
-        We need to re-map the indices to do this.  
-        Essentially we combine all the solids in the batch 
-        into a single disjoint solid
-        """
-        dest_feature_data = acc_batch["feature_data"]
-        first_face_index = len(dest_feature_data["face_features"])
-        first_edge_index = len(dest_feature_data["edge_features"])
-        first_coedge_index = len(dest_feature_data["coedge_features"])
+    # The coedge indices for coedges owned by "small faces" also needs to 
+    # be processed here as we need to apply different values to the 
+    # coedge indices and the padding
+    new_padding_value = coedge_offset
+    coedge_offset = 0
+    Cf = []   
+    small_face_offset = 0
+    for solid_index, data in enumerate(data_list):
+        num_small_faces = data["coedges_of_small_faces"].shape[0]
+        num_big_faces = len(data["coedges_of_big_faces"])
+        old_to_new_face_index = data["old_to_new_face_indices"]
+        num_coedges = data["coedge_features"].shape[0]
 
-        id_lookup = acc_batch["id_lookup"]
-        orig_face_ids = id_lookup["orig_face_ids"]
-        orig_edge_ids = id_lookup["orig_edge_ids"]
-        orig_coedge_ids = id_lookup["orig_coedge_ids"]
-        orig_loop_ids = id_lookup["orig_loop_ids"]
-        orig_vertex_ids = id_lookup["orig_vertex_ids"]
-        assert len(orig_face_ids) == first_face_index
-        assert len(orig_edge_ids) == first_edge_index
-        assert len(orig_coedge_ids) == first_coedge_index
+        # We need to add on the offsets for the new face indices
+        # Here this is done for the indices which allow us to get
+        # back from the combined batch to the original face indices
+        # in each B-Rep
+        offset_old_to_new_face_index = add_offset_to_face_index(
+            old_to_new_face_index, 
+            num_small_faces, 
+            small_face_offset, 
+            face_offset
+        )
 
+        offset_coedges_of_small_faces = add_offset_to_coedge_index_with_padding(
+            data["coedges_of_small_faces"],
+            num_coedges,
+            coedge_offset,
+            new_padding_value
+        )
+        Cf.append(offset_coedges_of_small_faces)
 
-        dest_topology = acc_batch["topology"]
-        assert len(dest_topology["faces"]) == first_face_index
-        assert len(dest_topology["edges"]) == first_edge_index
-        assert len(dest_topology["coedges"]) == first_coedge_index
+        split_batch[solid_index]["face_indices"] = offset_old_to_new_face_index
 
-        first_loop_index = len(dest_topology["loops"])
-        first_vertex_index = len(dest_topology["vertices"])
-        assert len(orig_loop_ids) == first_loop_index
-        assert len(orig_vertex_ids) == first_vertex_index
+        # Here we add on the offsets for the kernel Kf
+        brep_Kf = data["face_kernel_tensor"]
+        offset_Kf = add_offset_to_face_index(
+            brep_Kf, 
+            num_small_faces, 
+            small_face_offset, 
+            face_offset
+        )
+        Kf.append(offset_Kf)
 
-        # Now we need to concatenate the feature data
-        src_feature_data = batch_to_cat["feature_data"]
-
-        # Concatenate the face features
-        for old_face_id, face_feature in enumerate(src_feature_data["face_features"]):
-            face_feature["entity"] += first_face_index
-            new_face_id = len(dest_feature_data["face_features"])
-            assert face_feature["entity"] == new_face_id
-            orig_face_ids.append(self.location_in_batch(old_face_id, solid_in_batch))
-            dest_feature_data["face_features"].append(face_feature)
-
-        # Concatenate the edge features
-        for old_edge_id, edge_feature in enumerate(src_feature_data["edge_features"]):
-            edge_feature["entity"] += first_edge_index
-            new_edge_id = len(dest_feature_data["edge_features"])
-            assert edge_feature["entity"] == new_edge_id
-            orig_edge_ids.append(self.location_in_batch(old_edge_id, solid_in_batch))
-            dest_feature_data["edge_features"].append(edge_feature)
-
-        # Concatenate the coedge features
-        for old_coedge_id, coedge_feature in enumerate(src_feature_data["coedge_features"]):
-            coedge_feature["entity"] += first_coedge_index
-            new_coedge_id = len(dest_feature_data["coedge_features"])
-            assert coedge_feature["entity"] == new_coedge_id
-            orig_coedge_ids.append(self.location_in_batch(old_coedge_id, solid_in_batch))
-            dest_feature_data["coedge_features"].append(coedge_feature)
-
-        # Concatenate the topology data
-        scr_topology = batch_to_cat["topology"]
-        assert len(scr_topology["faces"]) == len(src_feature_data["face_features"])
-        assert len(scr_topology["edges"]) == len(src_feature_data["edge_features"])
-        assert len(scr_topology["coedges"]) == len(src_feature_data["coedge_features"])
-
-        for face in scr_topology["faces"]:
-            face_copy = copy.deepcopy(face)
-            for i, loop in enumerate(face_copy["loops"]):
-                face_copy["loops"][i] += first_loop_index
-            dest_topology["faces"].append(face_copy)
-
-        assert len(dest_topology["faces"]) == len(orig_face_ids), "Sanity check the length of the original face ids array"
-
-        for edge in scr_topology["edges"]:
-            edge_copy = copy.deepcopy(edge)
-            for i, coedge in enumerate(edge["coedges"]):
-                edge_copy["coedges"][i] += first_coedge_index
-            for i, vertex in enumerate(edge["vertices"]):
-                edge_copy["vertices"][i] += first_vertex_index
-            dest_topology["edges"].append(edge_copy)
-
-        assert len(dest_topology["edges"]) == len(orig_edge_ids), "Sanity check the length of the original edge ids array"
-
-        for old_loop_id, loop in enumerate(scr_topology["loops"]):
-            loop_copy = copy.deepcopy(loop)
-            for i, coedge in enumerate(loop["coedges"]):
-                loop_copy["coedges"][i] += first_coedge_index
-            loop_copy["face"] += first_face_index
-            new_loop_id = len(dest_topology["loops"])
-            dest_topology["loops"].append(loop_copy)
-            assert new_loop_id == len(orig_loop_ids)
-            orig_loop_ids.append(self.location_in_batch(old_loop_id, solid_in_batch))
-
-        for old_coedge_id, coedge in enumerate(scr_topology["coedges"]):
-            coedge_copy = copy.deepcopy(coedge)
-            new_coedge_id = len(dest_topology["coedges"])
-            coedge_copy["loop"] += first_loop_index
-            coedge_copy["edge"] += first_edge_index
-            coedge_copy["next"] += first_coedge_index
-            coedge_copy["previous"] += first_coedge_index
-            coedge_copy["partner"] += first_coedge_index
-            dest_topology["coedges"].append(coedge_copy)
-            
-        assert len(dest_topology["coedges"]) == len(orig_coedge_ids), "Sanity check the length of the original coedge ids array"
-
-        for old_vertex_id, vertex in enumerate(scr_topology["vertices"]):
-            vertex_copy = copy.deepcopy(vertex)
-            new_vertex_id = len(dest_topology["vertices"])
-            assert new_vertex_id == len(orig_vertex_ids)
-            dest_topology["vertices"].append(vertex_copy)
-            orig_vertex_ids.append(self.location_in_batch(old_vertex_id, solid_in_batch))
-
-
-    def build_face_index_tensors(self, id_lookup, batch):
-        """
-        Build the index tensors single sorted faces array
-        back to the original faces in the different solids
-        """
-        tensors = []
-
-        # Create an array of tensors of the correct sizes
-        for solid in batch:
-            topology = solid["topology"]
-            tensors.append(torch.LongTensor(len(topology["faces"])))
-
-        orig_face_ids = id_lookup["orig_face_ids"]
-        for index, face_id in enumerate(orig_face_ids):
-            bid = face_id["solid_in_batch"]
-            fid = face_id["entity_id"]
-            tensors[bid][fid] = index
-            
-        return tensors
+        small_face_offset += num_small_faces
+        face_offset += num_big_faces
+        coedge_offset += num_coedges
+        
+    batch_data = {
+        "face_features": concatenate_tensor_arrays(Xf_small_faces, Xf_big_faces, unsqueeze=True),
+        "edge_features": torch.cat(Xe),
+        "coedge_features": torch.cat(Xc),
+        "face_kernel_tensor": torch.cat(Kf),
+        "edge_kernel_tensor": torch.cat(Ke),
+        "coedge_kernel_tensor": torch.cat(Kc),
+        "coedges_of_edges": torch.cat(Ce),
+        "coedges_of_small_faces": torch.cat(Cf),
+        "coedges_of_big_faces": Csf,
+        "labels": concatenate_tensor_arrays(labels_small_faces, labels_big_faces, unsqueeze=False),
+        "split_batch": split_batch,
+        "file_stems": file_stems
+    }
+    return batch_data

@@ -1,0 +1,85 @@
+{
+    "training_set": [
+        "140239_15c1db48_0"
+    ],
+    "feature_standardization": {
+        "face_features": [
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            }
+        ],
+        "edge_features": [
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            }
+        ],
+        "coedge_features": [
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            }
+        ]
+    }
+}

@@ -10,8 +10,8 @@
         "CircularEdgeFeature",
         "ClosedEdgeFeature",
         "EllipticalEdgeFeature",
-        "HelicalEdgeFeature",
-        "IntcurveEdgeFeature",
+        "NonRationalBSplineEdgeFeature",
+        "RationalBSplineEdgeFeature",
         "StraightEdgeFeature"
     ],
     "coedge_features": [

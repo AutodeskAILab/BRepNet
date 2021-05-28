@@ -1,0 +1,159 @@
+{
+    "version": "911add8b4c12315d4a9934f948e687a28c122778",
+    "topology": {
+        "faces": [
+            {
+                "loops": [
+                    0,
+                    1
+                ]
+            },
+            {
+                "loops": [
+                    2,
+                    3
+                ]
+            },
+            {
+                "loops": [
+                    4,
+                    5
+                ]
+            }
+        ],
+        "edges": [
+            {
+                "coedges": [
+                    0,
+                    1
+                ],
+                "vertices": [
+                    0
+                ]
+            },
+            {
+                "coedges": [
+                    2,
+                    3
+                ],
+                "vertices": [
+                    1
+                ]
+            },
+            {
+                "coedges": [
+                    4,
+                    5
+                ],
+                "vertices": [
+                    2
+                ]
+            }
+        ],
+        "loops": [
+            {
+                "coedges": [
+                    1
+                ],
+                "face": 0
+            },
+            {
+                "coedges": [
+                    3
+                ],
+                "face": 0
+            },
+            {
+                "coedges": [
+                    4
+                ],
+                "face": 1
+            },
+            {
+                "coedges": [
+                    2
+                ],
+                "face": 1
+            },
+            {
+                "coedges": [
+                    5
+                ],
+                "face": 2
+            },
+            {
+                "coedges": [
+                    0
+                ],
+                "face": 2
+            }
+        ],
+        "coedges": [
+            {
+                "loop": 5,
+                "edge": 0,
+                "next": 0,
+                "previous": 0,
+                "partner": 1
+            },
+            {
+                "loop": 0,
+                "edge": 0,
+                "next": 1,
+                "previous": 1,
+                "partner": 0
+            },
+            {
+                "loop": 3,
+                "edge": 1,
+                "next": 2,
+                "previous": 2,
+                "partner": 3
+            },
+            {
+                "loop": 1,
+                "edge": 1,
+                "next": 3,
+                "previous": 3,
+                "partner": 2
+            },
+            {
+                "loop": 2,
+                "edge": 2,
+                "next": 4,
+                "previous": 4,
+                "partner": 5
+            },
+            {
+                "loop": 4,
+                "edge": 2,
+                "next": 5,
+                "previous": 5,
+                "partner": 4
+            }
+        ],
+        "vertices": [
+            {
+                "point3": {
+                    "x": -1.0,
+                    "y": -0.2229321488132273,
+                    "z": 0.0
+                }
+            },
+            {
+                "point3": {
+                    "x": 0.5637775022636786,
+                    "y": 0.22293214881322719,
+                    "z": 0.0
+                }
+            },
+            {
+                "point3": {
+                    "x": -0.5637775022636777,
+                    "y": -0.2229321488132273,
+                    "z": 0.0
+                }
+            }
+        ]
+    }
+}

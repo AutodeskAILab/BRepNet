@@ -1,0 +1,89 @@
+{
+    "training_set": {
+        "batches": [
+            [
+                "140239_15c1db48_0"
+            ]
+        ]
+    },
+    "feature_normalization": {
+        "face_features": {
+            "Plane": {
+                "mean": 0.0,
+                "variance": 1.0
+            },
+            "Cylinder": {
+                "mean": 0.0,
+                "variance": 1.0
+            },
+            "Cone": {
+                "mean": 0.0,
+                "variance": 1.0
+            },
+            "SphereFaceFeature": {
+                "mean": 0.0,
+                "variance": 1.0
+            },
+            "TorusFaceFeature": {
+                "mean": 0.0,
+                "variance": 1.0
+            },
+            "FaceAreaFeature": {
+                "mean": 0.0,
+                "variance": 1.0
+            },
+            "RationalNurbsFaceFeature": {
+                "mean": 0.0,
+                "variance": 1.0
+            }
+        },
+        "edge_features": {
+            "Concave edge": {
+                "mean": 0.0,
+                "variance": 1.0
+            },
+            "Convex edge": {
+                "mean": 0.0,
+                "variance": 1.0
+            },
+            "Smooth": {
+                "mean": 0.0,
+                "variance": 1.0
+            },
+            "EdgeLengthFeature": {
+                "mean": 0.0,
+                "variance": 1.0
+            },
+            "CircularEdgeFeature": {
+                "mean": 0.0,
+                "variance": 1.0
+            },
+            "ClosedEdgeFeature": {
+                "mean": 0.0,
+                "variance": 1.0
+            },
+            "EllipticalEdgeFeature": {
+                "mean": 0.0,
+                "variance": 1.0
+            },
+            "HelicalEdgeFeature": {
+                "mean": 0.0,
+                "variance": 0.0
+            },
+            "IntcurveEdgeFeature": {
+                "mean": 0.0,
+                "variance": 1.0
+            },
+            "StraightEdgeFeature": {
+                "mean": 0.0,
+                "variance": 1.0
+            }
+        },
+        "coedge_features": {
+            "ReversedCoEdgeFeature": {
+                "mean": 0.0,
+                "variance": 1.0
+            }
+        }
+    }
+}

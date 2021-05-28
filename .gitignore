@@ -1,0 +1,14 @@
+.vscode/
+pipeline/__pycache__/
+*.npz
+utils/__pycache__/
+dataloaders/__pycache__/
+tests/__pycache__/
+tests/test_working_dir/
+results/
+__pycache__/
+lightning_logs/
+logs/
+run_scripts/*
+tests/test_data/equivalent_dataloaders/cache/
+visualization/.ipynb_checkpoints/

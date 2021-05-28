@@ -7,13 +7,14 @@ from models.brepnet import BRepNet
 parser = argparse.ArgumentParser()
 parser = Trainer.add_argparse_args(parser)
 parser = BRepNet.add_model_specific_args(parser)
+parser.add_argument("--model", type=str, required=True,  help="Model to load use for testing")
 opts = parser.parse_args()
 
 
 def do_testing():
 
     trainer = Trainer.from_argparse_args(opts)
-    brepnet = BRepNet.load_from_checkpoint(opts.test_with_pretrained_model, opts=opts)
+    brepnet = BRepNet.load_from_checkpoint(opts.model, opts=opts)
 
     print("Starting testing")
     trainer.test(brepnet)

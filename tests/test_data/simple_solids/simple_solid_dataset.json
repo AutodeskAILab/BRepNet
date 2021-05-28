@@ -1,0 +1,103 @@
+{
+    "train": [
+        "23642_cd2f2029_0",
+        "polygon_35_side",
+        "block",
+        "block_fillet1",
+        "block_fillet3",
+        "block_hole",
+        "block_through_hole",
+        "block_torus_fillet3",
+        "cylinder",
+        "face_3_loops",
+        "four_cone",
+        "sphere",
+        "three_concave_edge",
+        "two_concave_closed_edge",
+        "two_elliptical_edges"
+    ],
+    "validation": [
+    ],
+    "test": [
+    ],
+    "feature_standardization": {
+        "face_features": [
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            }
+        ],
+        "edge_features": [
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            },
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            }
+        ],
+        "coedge_features": [
+            {
+                "mean": 0.0,
+                "standard_deviation": 1.0
+            }
+        ]
+    }
+}

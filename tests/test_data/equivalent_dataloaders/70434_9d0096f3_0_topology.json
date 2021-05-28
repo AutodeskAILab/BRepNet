@@ -1,0 +1,115 @@
+{
+    "version": "911add8b4c12315d4a9934f948e687a28c122778",
+    "topology": {
+        "faces": [
+            {
+                "loops": [
+                    0,
+                    1
+                ]
+            },
+            {
+                "loops": [
+                    2
+                ]
+            },
+            {
+                "loops": [
+                    3
+                ]
+            }
+        ],
+        "edges": [
+            {
+                "coedges": [
+                    0,
+                    1
+                ],
+                "vertices": [
+                    0
+                ]
+            },
+            {
+                "coedges": [
+                    2,
+                    3
+                ],
+                "vertices": [
+                    1
+                ]
+            }
+        ],
+        "loops": [
+            {
+                "coedges": [
+                    0
+                ],
+                "face": 0
+            },
+            {
+                "coedges": [
+                    2
+                ],
+                "face": 0
+            },
+            {
+                "coedges": [
+                    1
+                ],
+                "face": 1
+            },
+            {
+                "coedges": [
+                    3
+                ],
+                "face": 2
+            }
+        ],
+        "coedges": [
+            {
+                "loop": 0,
+                "edge": 0,
+                "next": 0,
+                "previous": 0,
+                "partner": 1
+            },
+            {
+                "loop": 2,
+                "edge": 0,
+                "next": 1,
+                "previous": 1,
+                "partner": 0
+            },
+            {
+                "loop": 1,
+                "edge": 1,
+                "next": 2,
+                "previous": 2,
+                "partner": 3
+            },
+            {
+                "loop": 3,
+                "edge": 1,
+                "next": 3,
+                "previous": 3,
+                "partner": 2
+            }
+        ],
+        "vertices": [
+            {
+                "point3": {
+                    "x": -1.0,
+                    "y": 0.17692307428671767,
+                    "z": 1.2246467991473533e-16
+                }
+            },
+            {
+                "point3": {
+                    "x": -1.0,
+                    "y": -0.17692307428671767,
+                    "z": 1.2246467991473533e-16
+                }
+            }
+        ]
+    }
+}

@@ -1,0 +1,176 @@
+{
+    "training_set": {
+        "batches": [
+            [
+                "23642_cd2f2029_0"
+            ],
+            [
+                "82297_93739ce0_6",
+                "24202_0db5d57a_8",
+                "40070_be9c502b_61"
+            ],
+            [
+                "34248_cc11976c_13",
+                "34910_6453f2c5_6",
+                "56436_2a8fc254_9",
+                "57153_2ec8170f_0"
+            ],
+            [
+                "63054_8b429cfe_75",
+                "27844_dc659761_11",
+                "127460_0dbc2c47_7",
+                "32766_acfa2aae_0",
+                "34443_27f9adde_2",
+                "146168_d7fe016c_0",
+                "49417_6ba15e4f_1",
+                "45459_a7015727_7",
+                "22002_315afcfc_2",
+                "55627_971fde61_23",
+                "87664_780f12e2_3",
+                "138972_c36d9d67_1",
+                "21680_360ba5c7_4",
+                "23475_b14d1dc8_1"
+            ],
+            [
+                "27452_f37cb86c_2",
+                "137785_67c3085b_6",
+                "140941_0515199a_5",
+                "133131_219a9e84_11",
+                "52890_0b1d2971_10",
+                "65343_ce99dbac_1",
+                "144566_cdb1c642_8",
+                "24775_d5c98d77_5",
+                "41783_d1c10326_1",
+                "138700_ab763a46_0",
+                "143662_4efcefe6_28",
+                "41031_57b1ef09_0",
+                "50001_e86a6698_6",
+                "27866_ece3076e_110",
+                "23010_f07fdf61_3",
+                "25118_f50fdc69_5",
+                "146451_466ce1c6_1",
+                "37605_e35cc4df_16",
+                "36826_d9269c2e_1",
+                "143906_5b26435a_6",
+                "49396_98ab955d_12",
+                "24559_3c306e71_4",
+                "44920_70dd4b80_8",
+                "77687_cbb18594_7",
+                "21803_8a36dcda_18",
+                "30259_d709601c_9",
+                "126477_6596d136_11",
+                "21235_01764fc7_24",
+                "124885_4feeaccf_10",
+                "51009_09466cf5_3",
+                "50419_c5590227_9",
+                "21642_b79d233e_11",
+                "21551_c6c2d516_1",
+                "120885_cf1949dd_2",
+                "100095_b25afcdf_3",
+                "65858_61e9b51a_5",
+                "135934_d2f6bb2e_57",
+                "135317_3c58b0d0_63",
+                "38840_0e449caf_6",
+                "23475_b14d1dc8_7",
+                "52890_acb7832e_1",
+                "122662_4422fe8f_3",
+                "32219_e5edc7ce_45",
+                "28893_a766b1c1_0",
+                "101541_a85fe737_2",
+                "44996_b3e9c266_9",
+                "41128_ee74f244_2",
+                "120881_a946667f_6",
+                "49406_100c707b_0",
+                "70434_9d0096f3_0",
+                "69488_ddafd661_1",
+                "137808_bd8b0070_0",
+                "45359_1768ab3f_4",
+                "78187_d8cd9e68_18"
+            ],
+            [
+                "29572_2f9283f2_1",
+                "22711_33843a5d_14"
+            ]
+        ]
+    },
+    "feature_normalization": {
+        "face_features": {
+            "Plane": {
+                "mean": 1.0,
+                "variance": 4.0
+            },
+            "Cylinder": {
+                "mean": 2.0,
+                "variance": 4.0
+            },
+            "Cone": {
+                "mean": 3.0,
+                "variance": 4.0
+            },
+            "SphereFaceFeature": {
+                "mean": 4.0,
+                "variance": 4.0
+            },
+            "TorusFaceFeature": {
+                "mean": 5.0,
+                "variance": 4.0
+            },
+            "FaceAreaFeature": {
+                "mean": 6.0,
+                "variance": 4.0
+            },
+            "RationalNurbsFaceFeature": {
+                "mean": 7.0,
+                "variance": 4.0
+            }
+        },
+        "edge_features": {
+            "Concave edge": {
+                "mean": 8.0,
+                "variance": 4.0
+            },
+            "Convex edge": {
+                "mean": 9.0,
+                "variance": 4.0
+            },
+            "Smooth": {
+                "mean": 10.0,
+                "variance": 4.0
+            },
+            "EdgeLengthFeature": {
+                "mean": 11.0,
+                "variance": 4.0
+            },
+            "CircularEdgeFeature": {
+                "mean": 12.0,
+                "variance": 4.0
+            },
+            "ClosedEdgeFeature": {
+                "mean": 13.0,
+                "variance": 4.0
+            },
+            "EllipticalEdgeFeature": {
+                "mean": 14.0,
+                "variance": 4.0
+            },
+            "HelicalEdgeFeature": {
+                "mean": 15.0,
+                "variance": 4.0
+            },
+            "IntcurveEdgeFeature": {
+                "mean": 16.0,
+                "variance": 4.0
+            },
+            "StraightEdgeFeature": {
+                "mean": 17.0,
+                "variance": 4.0
+            }
+        },
+        "coedge_features": {
+            "ReversedCoEdgeFeature": {
+                "mean": 18.0,
+                "variance": 4.0
+            }
+        }
+    }
+}
