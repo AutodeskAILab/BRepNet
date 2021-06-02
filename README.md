@@ -55,8 +55,8 @@ You can download the step distribution of the [Fusion 360 Gallery segmentation d
 
 ```
 cd /path/to/where_you_keep_data/
-curl https://fusion-360-gallery-dataset.s3-us-west-2.amazonaws.com/segmentation/s2.0.0/s2.0.0.zip -o s2.0.0_step.zip
-unzip s2.0.0_step.zip
+curl https://fusion-360-gallery-dataset.s3-us-west-2.amazonaws.com/segmentation/s2.0.0/s2.0.0.zip -o s2.0.0.zip
+unzip s2.0.0.zip
 ```
 
 If you are interested in building your own dataset using other step files then the procedure is documented [here](docs/building_your_own_dataset.md)
@@ -65,8 +65,9 @@ If you are interested in building your own dataset using other step files then t
 Run the quickstart script to extract topology and geometry information from the step data ready to train the network.
 ```
 cd BRepNet/
-python -m pipeline.quickstart /path/to/where_you_keep_data/s2.0.0
+python -m pipeline.quickstart --dataset_dir /path/to/where_you_keep_data/s2.0.0 --num_workers 5
 ```
+This may take up to 10 minutes to complete.
 
 ### Training the model
 You are then ready to train the model.  The quickstart script should exit telling you a default command to use which should be something like
@@ -93,10 +94,17 @@ tensorboard --logdir logs
 ## Testing the network
 
 ```
-python test.py \
+python -m eval.test \
   --dataset_file /path/to/dataset_file.json \
   --dataset_dir /path/to/data_dir \
   --model BRepNet/logs/<day>/<time>/checkpoints/epoch=x-step=x.ckpt
+```
+
+## Running the tests
+If you need to run the tests then this can be done using 
+
+```
+python -m unittest
 ```
 
 ## The new data-pipeline based on Open Cascade

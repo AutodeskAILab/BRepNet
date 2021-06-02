@@ -426,7 +426,8 @@ class BRepNetDatasetOld(Dataset):
             "coedges_of_small_faces": coedges_of_faces_tensor,
             "coedges_of_big_faces": coedges_of_single_faces,
             "labels": perm_all_batch_face_labels,
-            "split_batch": split_batch
+            "split_batch": split_batch,
+            "file_stems": batch_basenames
         }
 
 

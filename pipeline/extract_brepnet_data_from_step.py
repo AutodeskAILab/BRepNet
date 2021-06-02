@@ -544,12 +544,22 @@ def run_worker(worker_args):
     seg_dir = worker_args[4]
     extract_brepnet_features(file, output_path, feature_schema, mesh_dir, seg_dir)
 
+def filter_out_files_which_are_already_converted(files, output_path):
+    files_to_convert = []
+    for file in files:
+        output_file = output_path / (file.stem + ".npz")
+        if not output_file.exists():
+            files_to_convert.append(file)
+    return files_to_convert
+
+
 def extract_brepnet_data_from_step(
         step_path, 
         output_path, 
         mesh_dir=None,
         seg_dir=None,
-        feature_list_path=None, 
+        feature_list_path=None,
+        force_regeneration=True,
         num_workers=1
     ):
     parent_folder = Path(__file__).parent.parent
@@ -559,6 +569,9 @@ def extract_brepnet_data_from_step(
     files = [ f for f in step_path.glob("**/*.stp")]
     step_files = [ f for f in step_path.glob("**/*.step")]
     files.extend(step_files)
+
+    if not force_regeneration:
+        files = filter_out_files_which_are_already_converted(files, output_path)
 
     use_many_threads = num_workers > 1
     if use_many_threads:

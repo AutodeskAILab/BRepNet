@@ -5,7 +5,8 @@ start training.
 
 Instructions for using the script
 
-1) Download the Fusion 360 Gallery segmentation dataset from **TODO**
+1) Download the Fusion 360 Gallery segmentation dataset from 
+   https://fusion-360-gallery-dataset.s3-us-west-2.amazonaws.com/segmentation/s2.0.0/s2.0.0.zip
 
 2) Unzip the dataset
 
@@ -40,13 +41,13 @@ if __name__ == '__main__':
     dataset_dir = Path(args.dataset_dir)
     if not dataset_dir.exists():
         print(f"The dataset directory is not found at {dataset_dir}")
-        sys.exist(1)
+        sys.exit(1)
 
 
     step_path = dataset_dir / "breps/step"
     if not step_path.exists():
         print(f"The step directory is not found at {step_path}.  Step data was not included before version s2.0.0")
-        sys.exist(1)
+        sys.exit(1)
 
 
 

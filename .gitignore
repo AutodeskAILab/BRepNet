@@ -11,4 +11,5 @@ lightning_logs/
 logs/
 run_scripts/*
 tests/test_data/equivalent_dataloaders/cache/
-visualization/.ipynb_checkpoints/
+*/.ipynb_checkpoints/
+example_files/step_examples/temp_working

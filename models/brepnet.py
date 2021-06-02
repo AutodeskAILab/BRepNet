@@ -1,4 +1,5 @@
-from collections import OrderedDict 
+from collections import OrderedDict
+import numpy as np
 from pathlib import Path
 from pytorch_lightning.core.lightning import LightningModule
 import torch
@@ -372,7 +373,9 @@ class BRepNet(LightningModule):
 
         # Set up the names of the segments for clearer 
         # output statistics
-        self.segment_names = data_utils.load_json_data(self.find_segment_names_file(opts))
+        segment_names_file = self.find_segment_names_file(opts)
+        if segment_names_file is not None:
+            self.segment_names = data_utils.load_json_data(segment_names_file)
 
         # We always have one special input and special output layer
         assert opts.num_layers >= 2
@@ -441,6 +444,7 @@ class BRepNet(LightningModule):
         parser.add_argument('--use_old_dataloader', action="store_true", help="Use the old dataloader")
         parser.add_argument('--shuffle_train_set', type=bool, default=True, help="Use shuffling on the training set")
         parser.add_argument("--test_with_validation_set", action="store_true", help="Model to use for testing")
+        parser.add_argument("--logit_dir", type=str, help="Save logits to this directory")
         return parser
 
 
@@ -509,7 +513,7 @@ class BRepNet(LightningModule):
         return torch.argmax(norm_seg_scores, dim=1)
 
 
-    def brepnet_step(self, batch, batch_idx):
+    def brepnet_step(self, batch, batch_idx, save_logits):
         """
         A train or validation step for the BRepNet network on one batch
         """
@@ -527,6 +531,11 @@ class BRepNet(LightningModule):
         # Make the forward pass through the network
         # The tensor logits is now size [ num_faces_in_batch x num_classes ]
         segmentation_scores = self(Xf, Xe, Xc, Kf, Ke, Kc, Ce, Cf, Csf)
+
+        # We may want to save the logits for use in downstream procedures
+        # like visualization or CAD automation.  We save them here is requested
+        if save_logits:
+            self.save_logits(batch, segmentation_scores.detach())
 
         # Now find the loss
         labels = batch["labels"]
@@ -569,7 +578,7 @@ class BRepNet(LightningModule):
         
 
     def training_step(self, batch, batch_idx):
-        output = self.brepnet_step(batch, batch_idx)
+        output = self.brepnet_step(batch, batch_idx, False)
                 
         # Log some data to tensorboard
         self.log("loss", output["loss"].item(), on_step=True, on_epoch=False)
@@ -584,7 +593,8 @@ class BRepNet(LightningModule):
         Here we call the training step and then rename the 
         keys so the logs are correct
         """
-        output = self.brepnet_step(batch, batch_idx)
+        save_logits = self.opts.logit_dir is not None
+        output = self.brepnet_step(batch, batch_idx, save_logits)
         self.log("validation/loss", output["loss"].item(), on_step=False, on_epoch=True, sync_dist=True, prog_bar=False)
         return output
 
@@ -644,7 +654,8 @@ class BRepNet(LightningModule):
         """
         Test on one batch
         """
-        return self.brepnet_step(batch, batch_idx)
+        save_logits = self.opts.logit_dir is not None
+        return self.brepnet_step(batch, batch_idx, save_logits)
                 
 
     def test_epoch_end(self, outputs):
@@ -659,7 +670,7 @@ class BRepNet(LightningModule):
         # If the segment names information is provided then log the 
         # per-class IoU
         per_class_iou = {}
-        if self.segment_names is not None:
+        if hasattr(self, "segment_names"):
             assert len(self.segment_names) == len(output["per_class_iou"])
             for name, iou in zip(self.segment_names, output["per_class_iou"]):
                 log_name = f"test/{name}_iou"
@@ -667,6 +678,33 @@ class BRepNet(LightningModule):
                 per_class_iou[name] = iou
             output["per_class_iou"] = per_class_iou
         return output
+
+
+    def save_logits(self, batch, batch_face_seg_scores):
+        """
+        Save logits for this batch
+        """
+        output_folder = Path(self.opts.logit_dir)
+        if not output_folder.exists():
+            output_folder.mkdir()
+
+        # We need to split the logits based on the 
+        # split_batch info.  This splits up the logits 
+        # into tensors for each solid
+        for split_solid, file_stem in zip(batch["split_batch"], batch["file_stems"]):
+            face_seg_scores_for_solid = batch_face_seg_scores[split_solid["face_indices"]]
+
+            # The segmentation scores are not normalized.  We want to convert these
+            # to logits (probabilities that a face is of each class)
+            face_logits_for_solid = F.softmax(face_seg_scores_for_solid.detach(), dim=1)
+
+            # Now find the pathname to save the logits file
+            output_pathname = output_folder / (file_stem + ".logits")
+
+            # Finally use numpy to save the logits information in text format
+            np.savetxt(output_pathname, face_logits_for_solid.numpy())
+            
+
 
 
     def train_dataloader(self):

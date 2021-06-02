@@ -186,7 +186,7 @@ class BRepNetDataset(Dataset):
         self.bodies = dataset_info[train_val_or_test]
         self.feature_standardization = dataset_info["feature_standardization"]
         self.dataset_dir = Path(self.opts.dataset_dir)
-        self.label_dir = self.find_label_dir(opts)
+        self.label_dir = self.find_label_dir(opts, train_val_or_test)
         self.cache_dir = self.create_cache_dir(self.dataset_dir)
 
 
@@ -237,6 +237,8 @@ class BRepNetDataset(Dataset):
             sorted_feature_list = sorted(feature_list)
             for feature in sorted_feature_list:
                 string_list.append(feature)
+        if self.label_dir is not None:
+            string_list.append("with_labels")
         return self.hash_strings_in_list(string_list)
 
 
@@ -282,7 +284,7 @@ class BRepNetDataset(Dataset):
         return cache_dir
 
 
-    def find_label_dir(self, opts):
+    def find_label_dir(self, opts, train_val_or_test):
         """
         Try to locate the dir where the labels are stored if this is not
         given explicitely 
@@ -310,11 +312,25 @@ class BRepNetDataset(Dataset):
             print(f"Using labels from {seg_dir}")
             return seg_dir
 
+        # When using the model to evaluate on data without labels
+        # the test set if used.  Hence if we are building this
+        # datalaoder for the test set then we allow the labels to be
+        # None without asserting
+        if train_val_or_test == "test_set":
+            print(" ")
+            print("Warning!! - No labels are provided.  This can happen when you")
+            print("are evaluating with a pre-trained model on an unlabelled dataset.")
+            print("Please disregard and accuracy and IoU values which get logged.")
+            print(" ")
+            return None
+
+        print(" ")
         print("Error!  Failed to find any label files.")
         print("These files should have the extension .seg and contain the")
         print("segment index for each face in each brep")
         print(" ")
         print("You can use the --label_dir option to point the model at the appropriate folder")
+        print(" ")
         assert False, "Failed to locate labels (seg files)"
 
 
@@ -345,8 +361,14 @@ class BRepNetDataset(Dataset):
         Kf_perm = old_to_new_face_indices[Kf]
         Xf_perm = Xf[new_to_old_face_indices]
 
-        labels = self.load_labels(file_stem)
-        labels_perm = labels[new_to_old_face_indices]
+        # If we are evaluating a pre-trained model on a dataset
+        # with no labels then the label_dir will be none.  In this
+        # case we provide some "dummy" label values here.
+        if self.label_dir is not None:
+            labels = self.load_labels(file_stem)
+            labels_perm = labels[new_to_old_face_indices]
+        else:
+            labels_perm = torch.zeros(Xf_perm.size(0), dtype=torch.int64)
 
         data = {
             "face_features": Xf_perm,
