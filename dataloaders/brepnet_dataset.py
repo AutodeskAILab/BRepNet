@@ -296,11 +296,14 @@ class BRepNetDataset(Dataset):
         first_file_stem = self.bodies[0]
         dataset_dir = Path(opts.dataset_dir)
 
-        # Look for the seg files in the same folder as the others
-        cadidate_label_file = dataset_dir / (first_file_stem + ".seg")
+        # Look for the seg files in the same folder as the 
+        # step files.  This assumes the intermediate files
+        # were created in a subfolder of the dataset folder
+        # as is done by the quickstart script
+        cadidate_label_file = dataset_dir.parent / (first_file_stem + ".seg")
         if cadidate_label_file.exists():
             print(f"Using labels from {dataset_dir}")
-            return dataset_dir
+            return dataset_dir.parent
 
         # When using the Fusion Gallery segmentation dataset from the  
         # quickstart script, the seg files in the path 
