@@ -106,7 +106,7 @@ You can visualize the segmentation data using a Jupyter notebook and the tools i
 To evaluate the model on you own step data you can use the script [evaluate_folder.py](eval/evaluate_folder.py)
 
 ```
-python -m eval/evaluate_folder  \
+python -m eval.evaluate_folder  \
   --dataset_dir ./example_files/step_examples
   --dataset_file ./example_files/feature_standardization/s2.0.0_step_all_features.json \
   --model ./example_files/pretrained_models/pretrained_s2.0.0_step_all_features_0519_073100.ckpt
