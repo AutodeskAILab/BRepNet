@@ -13,5 +13,7 @@ dependencies:
   - pytorch-lightning
   - xlsxwriter
   - occwl
+  - jupyter
+  - pythreejs
 
 

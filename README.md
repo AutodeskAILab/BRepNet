@@ -42,7 +42,6 @@ conda activate brepnet
 For GPU training you will need to change the pytorch install to include your cuda version.  i.e.
 ```
 conda install pytorch cudatoolkit=11.1 -c pytorch -c conda-forge
-
 ```
 
 For training with multiple workers you may hit errors of the form `OSError: [Errno 24] Too many open files`.  In this case you need to increase the number of available file handles on the machine using 
@@ -78,7 +77,7 @@ python -m train.train \
   --max_epochs 50
 ```
 
-You may want to adjust the `--num_workers` and `--gpus` parameters to match your machine.   The options and hyper-parameters for BRepNet can be seen in `BRepNet.add_model_specific_args` in [brepnet.py](models/brepnet.py).   For a full list of all hyper-parameters including those defined in pytorch-lightning see
+You may want to adjust the `--num_workers` and `--gpus` parameters to match your machine.  The model runs with the pytorch-lightning `ddp-spawn` mode, so you can choose either 1 worker thread and multiple gpus or multiple threads and a single gpu.   The options and hyper-parameters for BRepNet can be seen in `BRepNet.add_model_specific_args` in [brepnet.py](models/brepnet.py).   For a full list of all hyper-parameters including those defined in pytorch-lightning see
 
 ```
 python -m train.train --help

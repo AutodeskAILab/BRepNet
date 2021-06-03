@@ -110,8 +110,8 @@ def build_dataset_file(args):
     if args.use_old_dataloader:
         new_dataset["test_set"] = create_old_test_set(dataset_dir)
     else:
-        dataset_dir = working_dir
         new_dataset["test_set"] = create_new_test_set(dataset_dir, working_dir, args.input_features)
+        dataset_dir = working_dir
     
     data_utils.save_json_data(dataset_file, new_dataset)
     return dataset_file, dataset_dir
@@ -147,7 +147,8 @@ def evaluate_folder(step_folder, feature_standardization, model, input_features=
     args_to_parse = [
         "--dataset_dir", str(step_folder),
         "--dataset_file", str(feature_standardization),
-        "--model", str(model)
+        "--model", str(model),
+        "--segment_names", "example_files/pretrained_models/segment_names.json"
     ]
     if input_features is not None:
         args_to_parse.append("--input_features")
