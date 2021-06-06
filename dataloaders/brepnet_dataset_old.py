@@ -151,6 +151,11 @@ class BRepNetDatasetOld(Dataset):
         Load face label file
         """
         label_file_pathname = self.root_dir / ( basename+"_labels.json")
+
+        # If we are evaluating the model then the labels will not be
+        # present
+        if not label_file_pathname.exists():
+            return None
         return data_utils.load_json_data(label_file_pathname)
 
 
@@ -437,20 +442,21 @@ class BRepNetDatasetOld(Dataset):
         """
         for entity in feature_data:
             for feature in entity["features"]:
-                mean = feature_normalization[feature["feature_name"]]["mean"]
-                variance = feature_normalization[feature["feature_name"]]["variance"]
+                if feature["feature_name"] in self.feature_lists["face_features"]:
+                    mean = feature_normalization[feature["feature_name"]]["mean"]
+                    variance = feature_normalization[feature["feature_name"]]["variance"]
 
-                original_value = feature["feature_value"]
-                new_value = original_value-mean
+                    original_value = feature["feature_value"]
+                    new_value = original_value-mean
 
-                # Check for very small variation in the feature.
-                # It could be that in a given (small) dataset then all the values
-                # are the same and the feature basically has no value at all
-                if abs(variance) > 1e-7:
-                    new_value /= math.sqrt(variance)
+                    # Check for very small variation in the feature.
+                    # It could be that in a given (small) dataset then all the values
+                    # are the same and the feature basically has no value at all
+                    if abs(variance) > 1e-7:
+                        new_value /= math.sqrt(variance)
 
-                # Store the Standardized value back in the feature
-                feature["feature_value"] = new_value
+                    # Store the Standardized value back in the feature
+                    feature["feature_value"] = new_value
 
 
     def standardize_brep_feature_data(self, feature_data):
@@ -478,24 +484,34 @@ class BRepNetDatasetOld(Dataset):
         batch = []
         batch_face_labels = []
         for basename in batch_basenames:
-            face_label_data_loaded = self.load_face_label_file(basename)
-            num_faces = len(face_label_data_loaded["face_labels"])
-            num_labels_per_face = len(face_label_data_loaded["face_labels"][0]["labels"])
-            face_labels = torch.IntTensor(num_faces, num_labels_per_face)
-
-            for i in range(num_faces):
-                for j in range(num_labels_per_face):
-                    face_labels[i,j] = face_label_data_loaded["face_labels"][i]["labels"][j]["label_value"]
-            
-            segment_indices = torch.argmax(face_labels, dim=1)
-            batch_face_labels.append(segment_indices)
-
             data_loaded = self.load_feature_data(basename)
             self.standardize_brep_feature_data(data_loaded["feature_data"])
 
             # Also load the topology data
             top_data = self.load_topology_file(basename)
             data_loaded["topology"] = top_data["topology"]
+
+            face_label_data_loaded = self.load_face_label_file(basename)
+            if face_label_data_loaded is not None:
+                num_faces = len(face_label_data_loaded["face_labels"])
+                num_labels_per_face = len(face_label_data_loaded["face_labels"][0]["labels"])
+                face_labels = torch.IntTensor(num_faces, num_labels_per_face)
+
+                for i in range(num_faces):
+                    for j in range(num_labels_per_face):
+                        face_labels[i,j] = face_label_data_loaded["face_labels"][i]["labels"][j]["label_value"]
+            else:
+                # This is the case where we don't have any labels
+                # probably because we are evaluating the model
+                print("Warning - Working without labels.  This is for evaluation only")
+                num_faces = len(data_loaded["feature_data"]["face_features"])
+                num_labels_per_face = len(self.feature_lists["face_features"])
+                face_labels = torch.zeros(num_faces, num_labels_per_face, dtype=torch.int64)
+
+            segment_indices = torch.argmax(face_labels, dim=1)
+            batch_face_labels.append(segment_indices)
+
+
 
             batch.append(data_loaded)
             
