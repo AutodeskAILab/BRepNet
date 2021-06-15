@@ -31,7 +31,20 @@ def do_training(opts):
         name = month_day,
         version = hour_min_second
     )
-    print(f"Training session {month_day}/{hour_min_second}")
+    
+    print(" ")
+    print(" ")
+    print("--------------------------------------------------------------------------")
+    print("BRepNet: A topological message passing system for solid models")
+    print(" ")
+    print(f"Logs written to {opts.log_dir}/{month_day}/{hour_min_second}")
+    print("To monitor the loss, accuracy and IoU use")
+    print(" ")
+    print("tensorboard --logdir logs")
+    print(" ")
+    print("The trained model with the best validation loss will be written to")
+    print(f"{opts.log_dir}/{month_day}/{hour_min_second}/checkpoints")
+    print(" ")
 
     # Create the trainer
     trainer = Trainer.from_argparse_args(

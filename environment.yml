@@ -15,5 +15,5 @@ dependencies:
   - occwl
   - jupyter
   - pythreejs
-
+  - tensorboard
 

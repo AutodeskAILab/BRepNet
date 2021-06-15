@@ -46,11 +46,12 @@ conda install pytorch cudatoolkit=11.1 -c pytorch -c conda-forge
 
 For training with multiple workers you may hit errors of the form `OSError: [Errno 24] Too many open files`.  In this case you need to increase the number of available file handles on the machine using 
 ```
-ulimit -Sn $(ulimit -Hn)
+ulimit -Sn 10000
 ```
+I find I need to set the limit to 10000 for 10 worker threads.
 
 ### Download the dataset
-You can download the step distribution of the [Fusion 360 Gallery segmentation dataset](https://github.com/AutodeskAILab/Fusion360GalleryDataset) from [this link](https://fusion-360-gallery-dataset.s3-us-west-2.amazonaws.com/segmentation/s2.0.0/s2.0.0.zip), or using curl
+You can download the step distribution of the [Fusion 360 Gallery segmentation dataset](https://github.com/AutodeskAILab/Fusion360GalleryDataset) from [this link](https://fusion-360-gallery-dataset.s3-us-west-2.amazonaws.com/segmentation/s2.0.0/s2.0.0.zip).   The zip is 3.2Gb.   Alternatively download using curl
 
 ```
 cd /path/to/where_you_keep_data/
@@ -84,10 +85,15 @@ python -m train.train --help
 ```
 
 ### Monitoring the loss, accuracy and IoU
-By default BRepNet will log data to tensorboard in a folder called `logs`.   Each time you run the model the logs will be placed in a separate folder inside the `logs` directory with paths based on the date and time. To monitory the process you can use
+By default BRepNet will log data to tensorboard in a folder called `logs`.   Each time you run the model the logs will be placed in a separate folder inside the `logs` directory with paths based on the date and time.  At the start of training the path to the log folder will be printed into the shell.  To monitory the process you can use
 ```
 cd BRepNet
 tensorboard --logdir logs
+```
+A trained model is also saved every time the validation loss reaches a minimum.  The model will be in the same folder as the tensorboard logs
+
+```
+./logs/<date>/<time>/checkpoints
 ```
 
 ## Testing the network
