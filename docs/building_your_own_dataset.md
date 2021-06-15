@@ -12,11 +12,11 @@ and test sets.  It also contains the feature standardization coefficients derive
 
 The generated dataset file is needed in the training process.  It contains statistics from the training set which are used for feature standardization.   
 
-Finally the BRepNet [dataloader code](dataloaders/brepnet_dataset.py) will read the intermediate files and compute the index arrays which the network requires.  These depend on the kernel file chosen.  The results are cached during the first epoch and will be reused thereafter.  
+Finally the BRepNet [dataloader code](../dataloaders/brepnet_dataset.py) will read the intermediate files and compute the index arrays which the network requires.  These depend on the kernel file chosen.  The results are cached during the first epoch and will be reused thereafter.  
 
 
 ## Processing the STEP data
-The script [extract_brepnet_data_from_step.py](pipeline/extract_brepnet_data_from_step.py) reads the step files and generates the intermediate data.
+The script [extract_brepnet_data_from_step.py](../pipeline/extract_brepnet_data_from_step.py) reads the step files and generates the intermediate data.
 
 ```
 python -m pipeline.extract_brepnet_data_from_step \
@@ -29,7 +29,7 @@ python -m pipeline.extract_brepnet_data_from_step \
 
 `--output` Path to the save intermediate brep data
 
-`--feature_list` The list of features you would like to extract from the STEP data.  See [here](feature_lists) for the feature lists used in the ablation studies in the paper. 
+`--feature_list` The list of features you would like to extract from the STEP data.  See [here](../feature_lists) for the feature lists used in the ablation studies in the paper. 
 
 `--num_workers` The number of worker threads
 
@@ -38,7 +38,7 @@ python -m pipeline.extract_brepnet_data_from_step \
 `--seg_dir` Optionally cross check the seg files (labels) you are using contain one label for each face   
 
 ## Building the dataset file
-The dataset file can be built using the script [build_dataset_file.py](pipeline/build_dataset_file.py)
+The dataset file can be built using the script [build_dataset_file.py](../pipeline/build_dataset_file.py)
 
 ```
 python -m pipeline.build_dataset_file \
