@@ -317,8 +317,7 @@ class FaceIndexValidator():
                         # Get the shape.  It should be a face                
                         sub_shape = shape_tool.GetShape(sub_label)
                         if sub_shape.ShapeType() != TopAbs_FACE:
-                            if logger is not None:
-                                logger.error("Sub shape is not a face")
+                            print("Sub shape is not a face")
                             continue
 
                         # Get the r, g, b values encoding the Fusion face index

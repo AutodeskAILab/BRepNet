@@ -613,6 +613,7 @@ if __name__ == '__main__':
     if args.mesh_dir is not None:
         mesh_dir = Path(args.mesh_dir)
 
+    seg_dir = None
     if args.seg_dir is not None:
         seg_dir = Path(args.seg_dir)
 
