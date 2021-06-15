@@ -45,10 +45,11 @@ from pipeline.face_index_validator import FaceIndexValidator
 from pipeline.segmentation_file_crosschecker import SegmentationFileCrosschecker
 
 class BRepNetExtractor:
-    def __init__(self, step_file, output_dir, feature_schema):
+    def __init__(self, step_file, output_dir, feature_schema, scale_body=True):
         self.step_file = step_file
         self.output_dir = output_dir
         self.feature_schema = feature_schema
+        self.scale_body = scale_body
 
 
     def process(self):
@@ -58,7 +59,11 @@ class BRepNetExtractor:
         # Load the body from the STEP file
         body = self.load_body_from_step()
 
-        body = self.scale_body_to_unit_box(body)
+        # We want to apply a transform so that the solid
+        # is centered on the origin and scaled so it just fits
+        # into a box [-1, 1]^3
+        if self.scale_body:
+            body = self.scale_body_to_unit_box(body)
 
         top_exp = TopologyUtils.TopologyExplorer(body, ignore_orientation=True)
 

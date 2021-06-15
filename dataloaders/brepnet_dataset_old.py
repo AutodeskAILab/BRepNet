@@ -440,9 +440,16 @@ class BRepNetDatasetOld(Dataset):
         """
         Standardize feature data for faces, edges or coedges
         """
+        all_feature_names = set()
+        for name in self.feature_lists["face_features"]:
+            all_feature_names.add(name)
+        for name in self.feature_lists["edge_features"]:
+            all_feature_names.add(name)
+        for name in self.feature_lists["coedge_features"]:
+            all_feature_names.add(name)
         for entity in feature_data:
             for feature in entity["features"]:
-                if feature["feature_name"] in self.feature_lists["face_features"]:
+                if feature["feature_name"] in all_feature_names:
                     mean = feature_normalization[feature["feature_name"]]["mean"]
                     variance = feature_normalization[feature["feature_name"]]["variance"]
 

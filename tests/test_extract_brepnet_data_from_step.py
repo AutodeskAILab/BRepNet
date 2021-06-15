@@ -95,7 +95,8 @@ class TestBRepNetExtractor(unittest.TestCase):
         brepnet_extractor = BRepNetExtractor(
             file, 
             npz_folder, 
-            feature_schema
+            feature_schema,
+            scale_body = False  # Don't scale the body for the tests
         )
         brepnet_extractor.process()
 
