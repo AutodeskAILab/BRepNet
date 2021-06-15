@@ -136,7 +136,20 @@ class JupyterSegmentationViewer:
                 colors.append(incorrect_color)
         self._display_faces_with_colors(self.solid.faces(), colors)
 
-        
+    def view_faces_for_segment(self, segment_index, threshold):
+        logits = self.load_logits()
+        logits_for_segment = logits[:,segment_index]
+        faces_of_segment = logits_for_segment > threshold
+        highlighted_color = self.format_color([0, 255, 0])
+        other_color = self.format_color([156, 152, 143])
+        colors = []
+        for prediction in faces_of_segment:
+            if prediction:
+                colors.append(highlighted_color)
+            else:
+                colors.append(other_color)
+        self._display_faces_with_colors(self.solid.faces(), colors)
+
     def _view_segmentation(self, face_segmentation):
         colors = []
         for segment in face_segmentation:

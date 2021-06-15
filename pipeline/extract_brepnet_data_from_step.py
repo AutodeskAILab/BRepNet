@@ -9,6 +9,7 @@ import numpy as np
 from pathlib import Path
 from tqdm import tqdm
 
+from OCC.Core.Bnd import Bnd_Box
 from OCC.Core.BRep import BRep_Tool
 from OCC.Core.STEPControl import STEPControl_Reader
 from OCC.Extend import TopologyUtils
@@ -17,15 +18,19 @@ from OCC.Core.TopAbs import (TopAbs_VERTEX, TopAbs_EDGE, TopAbs_FACE, TopAbs_WIR
                              TopAbs_SHELL, TopAbs_SOLID, TopAbs_COMPOUND,
                              TopAbs_COMPSOLID)
 from OCC.Core.TopExp import topexp
+from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Trsf
 from OCC.Core.GProp import GProp_GProps
 from OCC.Core.BRepGProp import brepgprop_LinearProperties
 from OCC.Core.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface
+from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_Transform
 from OCC.Core.GeomAbs import (GeomAbs_Plane, GeomAbs_Cylinder, GeomAbs_Cone, 
                               GeomAbs_Sphere, GeomAbs_Torus, GeomAbs_BezierSurface, 
                               GeomAbs_BSplineSurface, GeomAbs_Line, GeomAbs_Circle, 
                               GeomAbs_Ellipse, GeomAbs_Hyperbola, GeomAbs_Parabola, 
                               GeomAbs_BezierCurve, GeomAbs_BSplineCurve, 
                               GeomAbs_OffsetCurve, GeomAbs_OtherCurve)
+
+from OCC.Core.BRepBndLib import brepbndlib_AddOptimal
 
 from OCC.Core.BRepGProp import brepgprop_LinearProperties, brepgprop_SurfaceProperties
 
@@ -52,6 +57,9 @@ class BRepNetExtractor:
         """
         # Load the body from the STEP file
         body = self.load_body_from_step()
+
+        body = self.scale_body_to_unit_box(body)
+
         top_exp = TopologyUtils.TopologyExplorer(body, ignore_orientation=True)
 
         if not self.check_manifold(top_exp):
@@ -100,6 +108,57 @@ class BRepNetExtractor:
         shape = reader.OneShape()
         return shape
 
+    def scale_body_to_unit_box(self, body):
+        bbox = self.find_box(body)
+        xmin = 0.0
+        xmax = 0.0
+        ymin = 0.0
+        ymax = 0.0
+        zmin = 0.0
+        zmax = 0.0
+        xmin, ymin, zmin, xmax, ymax, zmax = bbox.Get()
+        dx = xmax - xmin
+        dy = ymax - ymin
+        dz = zmax - zmin
+        longest_length = dx
+        if longest_length < dy:
+            longest_length = dy
+        if longest_length < dz:
+            longest_length = dz
+
+        orig = gp_Pnt(0.0, 0.0, 0.0)
+        center = gp_Pnt((xmin+xmax)/2.0, (ymin+ymax)/2.0, (zmin+zmax)/2.0, )
+        vec_center_to_orig = gp_Vec(center, orig)
+        move_to_center = gp_Trsf()
+        move_to_center.SetTranslation(vec_center_to_orig)
+
+        scale_trsf = gp_Trsf()
+        scale_trsf.SetScale(orig, 2.0/longest_length)
+        trsf_to_apply = scale_trsf.Multiplied(move_to_center)
+        
+        apply_transform = BRepBuilderAPI_Transform(trsf_to_apply)
+        apply_transform.Perform(body)
+
+        transformed_body = apply_transform.ModifiedShape(body)
+
+        check_bbox = self.find_box(transformed_body)
+        xmin = 0.0
+        xmax = 0.0
+        ymin = 0.0
+        ymax = 0.0
+        zmin = 0.0
+        zmax = 0.0
+        xmin, ymin, zmin, xmax, ymax, zmax = check_bbox.Get()
+        temp = 0
+        return transformed_body
+
+
+    def find_box(self, body):
+        bbox = Bnd_Box()
+        use_triangulation = True
+        use_shapetolerance = False
+        brepbndlib_AddOptimal(body, bbox, use_triangulation, use_shapetolerance)
+        return bbox
 
     def extract_face_features_from_body(self, body, entity_mapper):
         """
