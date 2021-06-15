@@ -125,3 +125,14 @@ python -m unittest
 ## The new data-pipeline based on Open Cascade
 The original BRepNet pipeline used proprietary code to process data from solid models and convert these to network input.  In an effort to make this BRepNet as reusable as possible we have converted this pipeline to work with Open Cascade and [python OCC](https://github.com/tpaviot/pythonocc-core).  As with any kind of translation between solid model formats, the translation to step introduces some differences in the data.  These are documented [here](docs/differences_in_open_cascade_pipeline.md).  When training with the default options given above you will obtain very similar numbers to the ones published.
 
+## License
+Shield: [![CC BY-NC-SA 4.0][cc-by-nc-sa-shield]][cc-by-nc-sa]
+
+This work is licensed under a
+[Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License][cc-by-nc-sa].
+
+[![CC BY-NC-SA 4.0][cc-by-nc-sa-image]][cc-by-nc-sa]
+
+[cc-by-nc-sa]: http://creativecommons.org/licenses/by-nc-sa/4.0/
+[cc-by-nc-sa-image]: https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png
+[cc-by-nc-sa-shield]: https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg
