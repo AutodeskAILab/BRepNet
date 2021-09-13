@@ -39,7 +39,7 @@ class TestDataloadersEquivalent(TestBase):
             new_dataset_file,
             brep_indices
         ):
-
+        self.remove_folder(self.working_dir())
         # Make sure the dataloaders are not working with 
         # cache data
         self.remove_cache_folder(self.equivalent_dataloaders_dir())
@@ -247,17 +247,7 @@ class TestDataloadersEquivalent(TestBase):
         extractor = BRepNetJsonExtractor(topology, features, feature_schema)
         data = extractor.process()
         output_pathname = output_path / f"{file_stem}.npz"
-        np.savez(
-            output_pathname, 
-            data["face_features"],
-            data["edge_features"],
-            data["coedge_features"], 
-            data["coedge_to_next"],
-            data["coedge_to_mate"],
-            data["coedge_to_face"],
-            data["coedge_to_edge"],
-            savez_compressed = True
-        )
+        data_utils.save_npz_data_without_uvnet_features(output_pathname, data)
 
 
     def make_labels_from_json(self, label_file, output_file):
@@ -275,6 +265,7 @@ class TestDataloadersEquivalent(TestBase):
 
 
     def test_dataloaders_equivalent(self):
+        self.remove_folder(self.working_dir())
         data_dir = self.equivalent_dataloaders_dir()
         old_dataset_file = data_dir / "dummy_old_dataset_single_brep.json"
         new_dataset_file = data_dir / "dummy_new_dataset_single_brep.json"
@@ -286,6 +277,7 @@ class TestDataloadersEquivalent(TestBase):
         )
 
     def test_full_dataset(self):
+        self.remove_folder(self.working_dir())
         data_dir = self.equivalent_dataloaders_dir()
         old_dataset_file = data_dir / "dummy_old_dataset_without_standardization.json"
         new_dataset_file = data_dir / "dummy_new_dataset_without_standardization.json"

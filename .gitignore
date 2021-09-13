@@ -13,3 +13,4 @@ run_scripts/*
 tests/test_data/equivalent_dataloaders/cache/
 */.ipynb_checkpoints/
 example_files/step_examples/temp_working
+pipeline/__init__.pyc

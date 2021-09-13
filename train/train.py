@@ -6,6 +6,19 @@ from pathlib import Path
 import time
 
 from models.brepnet import BRepNet
+import utils.data_utils as data_utils 
+
+def save_results(log_dir, opts, results):
+    output_file = log_dir / "test_results.json"
+    options_dict = {}
+    for opt in vars(opts):
+        options_dict[opt] = getattr(opts, opt)
+
+    data = {
+        "options": options_dict,
+        "results": results
+    }
+    data_utils.save_json_data(output_file, data)
 
 
 def do_training(opts):
@@ -31,6 +44,8 @@ def do_training(opts):
         name = month_day,
         version = hour_min_second
     )
+
+    log_dir = Path(tb_logger.log_dir)
     
     print(" ")
     print(" ")
@@ -43,7 +58,7 @@ def do_training(opts):
     print("tensorboard --logdir logs")
     print(" ")
     print("The trained model with the best validation loss will be written to")
-    print(f"{opts.log_dir}/{month_day}/{hour_min_second}/checkpoints")
+    print(f"{log_dir}/checkpoints")
     print(" ")
 
     # Create the trainer
@@ -56,9 +71,11 @@ def do_training(opts):
     print("Starting training")
     trainer.fit(brepnet)
     print("End training")
-
+    
     # Test using the best checkpoint (which the trainer will keep track of)
     test_results = trainer.test()
+    print(f"Logs written to {log_dir}")
+    save_results(log_dir, opts, test_results)
     print("End testing")
 
     output = {

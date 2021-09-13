@@ -133,17 +133,7 @@ def extract_brepnet_data(file, seg_path, output_path, feature_schema):
         extractor = BRepNetJsonExtractor(topology, features, feature_schema)
         data = extractor.process()
         output_pathname = output_path / f"{find_stem(file)}.npz"
-        np.savez(
-            output_pathname, 
-            data["face_features"],
-            data["edge_features"],
-            data["coedge_features"], 
-            data["coedge_to_next"],
-            data["coedge_to_mate"],
-            data["coedge_to_face"],
-            data["coedge_to_edge"],
-            savez_compressed = True
-        )        
+        data_utils.save_npz_data_without_uvnet_features(output_pathname, data)
 
 
 def run_worker(worker_args):

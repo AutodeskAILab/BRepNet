@@ -16,7 +16,8 @@ class TestBRepNetDataset(TestBase):
 
     def create_dataset(self):
         self.remove_cache_folder(self.simple_solid_test_data_dir())
-        self.remove_cache_folder(self.working_dir())
+        self.remove_folder(self.working_dir())
+
         self.generate_npz_files()
         opts = self.create_dummy_options(
             self.simple_solid_dataset_file(),
@@ -65,7 +66,7 @@ class TestBRepNetDataset(TestBase):
     def make_dummy_labels(self, npz_pathname, working_dir):
         data = data_utils.load_npz_data(npz_pathname)
         num_faces = data["face_features"].shape[0]
-        dummy_labels = np.arange(num_faces, dtype=np.int)
+        dummy_labels = np.arange(num_faces, dtype=np.int64)
 
         label_pathname = npz_pathname.with_suffix(".seg")
         np.savetxt(label_pathname, dummy_labels, fmt='%i', delimiter="\n")

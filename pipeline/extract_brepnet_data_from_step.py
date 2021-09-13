@@ -9,7 +9,6 @@ import numpy as np
 from pathlib import Path
 from tqdm import tqdm
 
-from OCC.Core.Bnd import Bnd_Box
 from OCC.Core.BRep import BRep_Tool
 from OCC.Core.STEPControl import STEPControl_Reader
 from OCC.Extend import TopologyUtils
@@ -18,11 +17,9 @@ from OCC.Core.TopAbs import (TopAbs_VERTEX, TopAbs_EDGE, TopAbs_FACE, TopAbs_WIR
                              TopAbs_SHELL, TopAbs_SOLID, TopAbs_COMPOUND,
                              TopAbs_COMPSOLID)
 from OCC.Core.TopExp import topexp
-from OCC.Core.gp import gp_Pnt, gp_Vec, gp_Trsf
 from OCC.Core.GProp import GProp_GProps
 from OCC.Core.BRepGProp import brepgprop_LinearProperties
 from OCC.Core.BRepAdaptor import BRepAdaptor_Curve, BRepAdaptor_Surface
-from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_Transform
 from OCC.Core.GeomAbs import (GeomAbs_Plane, GeomAbs_Cylinder, GeomAbs_Cone, 
                               GeomAbs_Sphere, GeomAbs_Torus, GeomAbs_BezierSurface, 
                               GeomAbs_BSplineSurface, GeomAbs_Line, GeomAbs_Circle, 
@@ -30,19 +27,21 @@ from OCC.Core.GeomAbs import (GeomAbs_Plane, GeomAbs_Cylinder, GeomAbs_Cone,
                               GeomAbs_BezierCurve, GeomAbs_BSplineCurve, 
                               GeomAbs_OffsetCurve, GeomAbs_OtherCurve)
 
-from OCC.Core.BRepBndLib import brepbndlib_AddOptimal
-
 from OCC.Core.BRepGProp import brepgprop_LinearProperties, brepgprop_SurfaceProperties
 
 # occwl
 from occwl.edge_data_extractor import EdgeDataExtractor, EdgeConvexity
 from occwl.edge import Edge
 from occwl.face import Face
+from occwl.solid import Solid
+from occwl.uvgrid import uvgrid
 
 # BRepNet
 from pipeline.entity_mapper import EntityMapper
 from pipeline.face_index_validator import FaceIndexValidator
 from pipeline.segmentation_file_crosschecker import SegmentationFileCrosschecker
+
+import utils.scale_utils as scale_utils 
 
 class BRepNetExtractor:
     def __init__(self, step_file, output_dir, feature_schema, scale_body=True):
@@ -63,7 +62,7 @@ class BRepNetExtractor:
         # is centered on the origin and scaled so it just fits
         # into a box [-1, 1]^3
         if self.scale_body:
-            body = self.scale_body_to_unit_box(body)
+            body = scale_utils.scale_solid_to_unit_box(body)
 
         top_exp = TopologyUtils.TopologyExplorer(body, ignore_orientation=True)
 
@@ -85,18 +84,39 @@ class BRepNetExtractor:
         edge_features = self.extract_edge_features_from_body(body, entity_mapper)
         coedge_features = self.extract_coedge_features_from_body(body, entity_mapper)
 
+        face_point_grids = self.extract_face_point_grids(body, entity_mapper)
+        assert face_point_grids.shape[1] == 7
+        coedge_point_grids = self.extract_coedge_point_grids(body, entity_mapper)
+        assert coedge_point_grids.shape[1] == 12
+
+        coedge_lcs = self.extract_coedge_local_coordinate_systems(body, entity_mapper)
+        coedge_reverse_flags = self.extract_coedge_reverse_flags(body, entity_mapper)
+
         next, mate, face, edge  = self.build_incidence_arrays(body, entity_mapper)
+
+        coedge_scale_factors = self.extract_scale_factors(
+            next, 
+            mate, 
+            face, 
+            face_point_grids, 
+            coedge_point_grids
+        )
 
         output_pathname = self.output_dir / f"{self.step_file.stem}.npz"
         np.savez(
             output_pathname, 
-            face_features,
-            edge_features,
-            coedge_features, 
-            next, 
-            mate, 
-            face, 
-            edge,
+            face_features=face_features,
+            face_point_grids=face_point_grids,
+            edge_features=edge_features,
+            coedge_point_grids=coedge_point_grids,
+            coedge_features=coedge_features,
+            coedge_lcs=coedge_lcs,
+            coedge_scale_factors=coedge_scale_factors,
+            coedge_reverse_flags=coedge_reverse_flags,
+            next=next, 
+            mate=mate, 
+            face=face, 
+            edge=edge,
             savez_compressed = True
         )
 
@@ -112,58 +132,6 @@ class BRepNetExtractor:
         reader.TransferRoots()
         shape = reader.OneShape()
         return shape
-
-    def scale_body_to_unit_box(self, body):
-        bbox = self.find_box(body)
-        xmin = 0.0
-        xmax = 0.0
-        ymin = 0.0
-        ymax = 0.0
-        zmin = 0.0
-        zmax = 0.0
-        xmin, ymin, zmin, xmax, ymax, zmax = bbox.Get()
-        dx = xmax - xmin
-        dy = ymax - ymin
-        dz = zmax - zmin
-        longest_length = dx
-        if longest_length < dy:
-            longest_length = dy
-        if longest_length < dz:
-            longest_length = dz
-
-        orig = gp_Pnt(0.0, 0.0, 0.0)
-        center = gp_Pnt((xmin+xmax)/2.0, (ymin+ymax)/2.0, (zmin+zmax)/2.0, )
-        vec_center_to_orig = gp_Vec(center, orig)
-        move_to_center = gp_Trsf()
-        move_to_center.SetTranslation(vec_center_to_orig)
-
-        scale_trsf = gp_Trsf()
-        scale_trsf.SetScale(orig, 2.0/longest_length)
-        trsf_to_apply = scale_trsf.Multiplied(move_to_center)
-        
-        apply_transform = BRepBuilderAPI_Transform(trsf_to_apply)
-        apply_transform.Perform(body)
-
-        transformed_body = apply_transform.ModifiedShape(body)
-
-        check_bbox = self.find_box(transformed_body)
-        xmin = 0.0
-        xmax = 0.0
-        ymin = 0.0
-        ymax = 0.0
-        zmin = 0.0
-        zmax = 0.0
-        xmin, ymin, zmin, xmax, ymax, zmax = check_bbox.Get()
-        temp = 0
-        return transformed_body
-
-
-    def find_box(self, body):
-        bbox = Bnd_Box()
-        use_triangulation = True
-        use_shapetolerance = False
-        brepbndlib_AddOptimal(body, bbox, use_triangulation, use_shapetolerance)
-        return bbox
 
     def extract_face_features_from_body(self, body, entity_mapper):
         """
@@ -431,6 +399,330 @@ class BRepNetExtractor:
         if edge.Orientation() == TopAbs_REVERSED:
             return 1.0
         return 0.0
+
+
+    def extract_face_point_grids(self, body, entity_mapper):
+        """
+        Extract a UV-Net point grid for each face.
+
+        Returns a tensor [ num_faces x 7 x num_pts_u x num_pts_v ]
+
+        For each point the values are 
+        
+            - x, y, z (point coords)
+            - i, j, k (normal vector coordinates)
+            - Trimming mast
+
+        """
+        face_grids = []
+        solid = Solid(body)
+        for face in solid.faces():
+            assert len(face_grids) == entity_mapper.face_index(face.topods_shape())
+            face_grids.append(self.extract_face_point_grid(face))
+        return np.stack(face_grids)
+
+    def extract_face_point_grid(self, face):
+        """
+        Extract a UV-Net point grid from the given face.
+
+        Returns a tensor [ 7 x num_pts_u x num_pts_v ]
+
+        For each point the values are 
+        
+            - x, y, z (point coords)
+            - i, j, k (normal vector coordinates)
+            - Trimming mast
+
+        """
+        num_u=10
+        num_v=10
+
+        points = uvgrid(face, num_u, num_v, method="point")
+        normals = uvgrid(face, num_u, num_v, method="normal")
+        mask = uvgrid(face, num_u, num_v, method="inside")
+
+        # This has shape [ num_pts_u x num_pts_v x 7 ]
+        single_grid = np.concatenate([points, normals, mask], axis=2)
+       
+        return np.transpose(single_grid, (2, 0, 1))
+
+
+    def extract_coedge_point_grids(self, body, entity_mapper):
+        """
+        Extract coedge grids (aligned with the coedge direction).
+
+        The coedge grids will be of size
+
+            [ num_coedges x 12 x num_u ]
+
+        The values are
+
+            - x, y, z    (coordinates of the points)
+            - tx, ty, tz (tangent of the curve, oriented to match the coedge)
+            - Lx, Ly, Lz (Normal for the left face)
+            - Rx, Ry, Rz (Normal for the right face)
+        """
+        coedge_grids = []
+        solid = Solid(body)
+        top_exp = TopologyUtils.TopologyExplorer(body, ignore_orientation=False)
+        for wire in top_exp.wires():
+            wire_exp = TopologyUtils.WireExplorer(wire)
+            for coedge in wire_exp.ordered_edges():
+                assert len(coedge_grids) == entity_mapper.halfedge_index(coedge)
+                occwl_oriented_edge = Edge(coedge)
+                faces = [ f for f in solid.faces_from_edge(occwl_oriented_edge) ]
+                coedge_grids.append(self.extract_coedge_point_grid(occwl_oriented_edge, faces))
+        return np.stack(coedge_grids)
+
+
+    def extract_coedge_point_grid(self, coedge, faces):
+        """
+        Extract a coedge grid (aligned with the coedge direction).
+
+        The coedge grids will be of size
+
+            [ num_coedges x 12 x num_u ]
+
+        The values are
+
+            - x, y, z    (coordinates of the points)
+            - tx, ty, tz (tangent of the curve, oriented to match the coedge)
+            - Lx, Ly, Lz (Normal for the left face)
+            - Rx, Ry, Rz (Normal for the right face)
+        """
+        num_u = 10
+        coedge_data = EdgeDataExtractor(coedge, faces, num_samples=num_u, use_arclength_params=True)
+        if not coedge_data.good:
+            # We hit a problem evaluating the edge data.  This may happen if we have
+            # an edge with not geometry (like the pole of a sphere).
+            # In this case we return zeros
+            return np.zeros((12, num_u)) 
+
+        single_grid = np.concatenate(
+            [
+                coedge_data.points, 
+                coedge_data.tangents, 
+                coedge_data.left_normals,
+                coedge_data.right_normals
+            ],
+            axis = 1
+        )
+        return np.transpose(single_grid, (1,0))
+
+
+    
+    def extract_coedge_local_coordinate_systems(self, body, entity_mapper):
+        """
+        The coedge LCS is a special coordinate system which aligns with the B-Rep
+        geometry.  
+        
+            - The origin will be at the midpoint of the edge.
+            - The w_vec will be the normal vector of the left face. 
+            - The u_ref will be the coedge tangent at the midpoint.  We get the u_vec by projecting this normal
+              to the w_vec
+            - The v_vec is computed from the cross product
+            - The scale factor will be 1.0.  We keep track of some scale factors in another tensor
+ 
+        Returns a tensor of size [ num_coedges x 4 x 4]
+
+        This is a homogeneous transform matrix from local to global coordinates
+        """
+        solid = Solid(body)
+        top_exp = TopologyUtils.TopologyExplorer(body, ignore_orientation=False)
+        coedge_lcs = []
+        for wire in top_exp.wires():
+            wire_exp = TopologyUtils.WireExplorer(wire)
+            for coedge in wire_exp.ordered_edges():
+                assert len(coedge_lcs) == entity_mapper.halfedge_index(coedge)
+                occwl_oriented_edge = Edge(coedge)
+                faces = [ f for f in solid.faces_from_edge(occwl_oriented_edge) ]
+                coedge_lcs.append(self.extract_coedge_local_coordinate_system(occwl_oriented_edge, faces))
+
+        return np.stack(coedge_lcs)
+
+
+    def extract_coedge_local_coordinate_system(self, oriented_edge, faces):
+        """
+        The coedge LCS is a special coordinate system which aligns with the B-Rep
+        geometry.  
+        
+            - The origin will be at the midpoint of the edge.
+            - The w_vec will be the normal vector of the left face. 
+            - The u_ref will be the coedge tangent at the midpoint.  We get the u_vec by projecting this normal
+              to the w_vec
+            - The v_vec is computed from the cross product
+            - The scale factor will be 1.0.  We keep track of some scale factors in another tensor
+ 
+        Returns a tensor of size [ 4 x 4]
+
+        This is a homogeneous transform matrix from local to global coordinates
+            [[ u_vec.x  v_vec.x  v_vec.x  orig.x]
+             [ u_vec.y  v_vec.y  v_vec.y  orig.y]
+             [ u_vec.z  v_vec.z  v_vec.z  orig.z]
+             [ 0        0        0        1     ]]
+        """
+        num_u = 3
+        edge_data = EdgeDataExtractor(oriented_edge, faces, num_samples=num_u, use_arclength_params=True)
+        if not edge_data.good:
+            # We hit a problem evaluating the edge data.  This may happen if we have
+            # an edge with not geometry (like the pole of a sphere).
+            # We want to return zeros in this case
+            return np.zeros((4,4))
+        origin = edge_data.points[1]
+        w_vec = edge_data.left_normals[1]
+
+        # Make sure w_vec is a unit vector
+        w_vec = w_vec/np.linalg.norm(w_vec)
+
+        # We need to project v_ref normal to w_vec
+        v_ref =  edge_data.tangents[1]
+        v_vec = self.try_to_project_normal(w_vec, v_ref)
+        if v_vec is None:
+            # This happens when v_ref is parallel to w_vec.
+            # In this case we just pick any v_vec at random
+            v_vec = self.any_orthogonal(v_vec)
+
+        u_vec = np.cross(v_vec, w_vec)
+        
+        # The upper part of the matric should look like this
+        # [[ u_vec.x  v_vec.x  v_vec.x  orig.x]
+        #  [ u_vec.y  v_vec.y  v_vec.y  orig.y]
+        #  [ u_vec.z  v_vec.z  v_vec.z  orig.z]]
+        mat_upper = np.transpose(np.stack([u_vec, v_vec, w_vec, origin]))
+
+        mat_lower = np.expand_dims(np.array([0, 0, 0, 1]), axis=0)
+        mat = np.concatenate([mat_upper, mat_lower], axis=0)
+
+        return mat
+
+
+    def try_to_project_normal(self, vec, ref):
+        """
+        Try to project the vector `ref` normal to vec
+        """
+        dp = np.dot(vec, ref)
+        delta = dp*vec
+        normal_dir = ref - delta
+        length = np.linalg.norm(normal_dir)
+        eps = 1e-7
+        if length < eps:
+            # Failed to project this vector normal
+            return None
+
+        # Return a unit vector
+        return normal_dir/length
+
+
+    def any_orthogonal(self, vec):
+        """
+        Find any random vector orthogonal to the given vector
+        """
+        nx = self.try_to_project_normal(vec, np.array([1, 0, 0]))
+        if nx is not None:
+            return nx
+                
+        ny = self.try_to_project_normal(vec, np.array([0, 1, 0]))
+        if ny is not None:
+            return ny
+
+        nz = self.try_to_project_normal(vec, np.array([0, 0, 1]))
+        assert nz is not None, f"Something is wrong with vec {vec}.  No orthogonal vector found"
+        return nz
+
+
+    def bounding_box_point_cloud(self, pts):
+        assert pts.shape[1] == 3
+        x = pts[:, 0]
+        y = pts[:, 1]
+        z = pts[:, 2]
+        box = [[x.min(), y.min(), z.min()], [x.max(), y.max(), z.max()]]
+        return np.array(box)
+
+
+    def scale_from_point_grids(self, grids):
+        assert grids.shape[1] == 7
+        face_pts = np.transpose(grids[:, :3, :, :].reshape((3, -1)))
+        return self.scale_from_point_cloud(face_pts)
+
+
+    def scale_from_point_cloud(self, pts):
+        assert pts.shape[1] == 3
+        bbox = self.bounding_box_point_cloud(pts)
+        diag = bbox[1] - bbox[0]
+        scale = 2.0 / max(diag[0], diag[1], diag[2])
+        return scale
+
+
+    def extract_scale_factors(self, next, mate, face, face_point_grids, coedge_point_grids):
+        """
+        The scale factors which need to be applied to the LCS for scale
+        invariance
+        """
+        identity = np.arange(next.size, dtype=next.dtype)
+        prev = np.zeros(next.size, dtype=next.dtype)
+        prev[next] = identity
+
+        num_coedges = mate.size
+
+        scales = []
+        
+        scale_from_faces = True
+        if scale_from_faces:
+            # Probably very slow
+            for i in range(num_coedges):
+                left_index = face[i]
+                right_index = face[mate[i]]
+                left = face_point_grids[left_index]
+                right = face_point_grids[right_index]
+                scale = self.scale_from_point_grids(np.stack([left, right]))
+                scales.append(scale)
+        else:
+            for i in range(num_coedges):
+                # This is a bit like a brepnet kernel.  
+                # We use the walks
+                # c
+                # c->next
+                # c->prev
+                # c->mate->next
+                # c->mate->prev
+                coedges = []
+                coedges.append(i)
+                coedges.append(next[i])
+                coedges.append(prev[i])
+                coedges.append(next[mate[i]])
+                coedges.append(prev[mate[i]])
+                points_from_coedges = []
+                for coedge_index in coedges:
+                    points = coedge_point_grids[coedge_index, :3]
+                    num_u = 10
+                    assert points_from_coedges.shape[0] == 3
+                    assert points_from_coedges.shape[1] == num_u
+                    points_from_coedges.append(points)
+                points_from_coedges = np.concatenate(points_from_coedges, axis=1)
+                points_from_coedges = points_from_coedges.transpose(points_from_coedges)
+                scale = self.scale_from_point_cloud(points_from_coedges)
+                scales.append(scale)
+        return np.array(scales)
+            
+
+
+    
+    def extract_coedge_reverse_flags(self, body, entity_mapper):
+        """
+        The flags for each coedge telling us if it is reversed wrt
+        its parent edge.   Notice that when coedge features are 
+        created, we need to reverse point ordering, flip tangent directions
+        and swap left and right faces based on this flag.
+        """
+        top_exp = TopologyUtils.TopologyExplorer(body, ignore_orientation=False)
+        reverse_flags = []
+        for wire in top_exp.wires():
+            wire_exp = TopologyUtils.WireExplorer(wire)
+            for coedge in wire_exp.ordered_edges():
+                assert len(reverse_flags) == entity_mapper.halfedge_index(coedge)
+                reverse_flags.append(self.reversed_edge_feature(coedge))
+        return np.stack(reverse_flags)
+    
 
     def build_incidence_arrays(self, body, entity_mapper):
         oriented_top_exp = TopologyUtils.TopologyExplorer(body, ignore_orientation=False)

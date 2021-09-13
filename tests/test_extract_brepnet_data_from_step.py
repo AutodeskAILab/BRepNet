@@ -25,6 +25,7 @@ from OCC.Core.GeomAbs import (GeomAbs_Plane, GeomAbs_Cylinder, GeomAbs_Cone,
 
 from pipeline.entity_mapper import EntityMapper
 from pipeline.extract_brepnet_data_from_step import BRepNetExtractor
+import utils.data_utils as data_utils
 
 class TestBRepNetExtractor(unittest.TestCase):
 
@@ -39,22 +40,6 @@ class TestBRepNetExtractor(unittest.TestCase):
         reader.TransferRoots()
         shape = reader.OneShape()
         return shape
-
-
-    def load_npz_data(self, npz_file):
-        with np.load(npz_file) as data:
-            self.assertTrue(len(data) == 8)
-            npz_data = {
-                "face_features": data["arr_0"],
-                "edge_features": data["arr_1"],
-                "coedge_features": data["arr_2"], 
-                "coedge_to_next": data["arr_3"], 
-                "coedge_to_mate": data["arr_4"], 
-                "coedge_to_face": data["arr_5"], 
-                "coedge_to_edge": data["arr_6"]
-            }
-        return npz_data
-
 
     def run_test_on_all_files(self, step_folder, npz_folder):
         step_files = [ f for f in step_folder.glob("**/*.step")]
@@ -106,7 +91,7 @@ class TestBRepNetExtractor(unittest.TestCase):
             print("The npz file was not generated and cannot be tested")
             return
 
-        data = self.load_npz_data(npz_pathname)
+        data = data_utils.load_npz_data(npz_pathname)
         self.check_topology(solid, data)
         self.check_topology_and_feature_data_consistent(data)
         return solid
@@ -621,7 +606,7 @@ class TestBRepNetExtractor(unittest.TestCase):
             solid,
             expected_data
         ):
-        data = self.load_npz_data(npz_file)
+        data = data_utils.load_npz_data(npz_file)
         feature_schema = self.load_feature_schema()
         if "num_faces" in expected_data:
             self.check_num_faces(data, expected_data["num_faces"])
