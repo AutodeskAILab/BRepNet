@@ -10,6 +10,7 @@ import utils.data_utils as data_utils
 from dataloaders.brepnet_dataset import BRepNetDataset, brepnet_collate_fn
 from dataloaders.brepnet_dataset_old import BRepNetDatasetOld
 from dataloaders.max_num_faces_sampler import MaxNumFacesSampler
+from models.uvnet_encoders import UVNetCurveEncoder, UVNetSurfaceEncoder
 
 
 def build_matrix_Psi(Xf, Xe, Xc, Kf, Ke, Kc):
@@ -297,7 +298,7 @@ class BRepNetFaceOutputLayer(LightningModule):
     The hidden state for edges and coedges will not be created.
     """
         
-    def __init__(self, num_mlp_layers, input_size, hidden_size, output_size, dropout=None):
+    def __init__(self, num_mlp_layers, input_size, output_size, dropout=None):
         """
         Initialization of the BRepNet output layer.
 
@@ -306,13 +307,9 @@ class BRepNetFaceOutputLayer(LightningModule):
         input_size     - This needs to be set to the total length of all the feature vectors
                          which will take part in the convolution
 
-        hidden_size    - This should generally be set to the MLP hidden size used in 
-                         the rest of the network.
+        output_size    - This is the size for the output face embeddings.
 
-        output_size    - This needs to be the number of classes which faces 
-                         can be categorized into.
-
-        dropout        - To use dropout, set this to the dropout probablity
+        dropout        - To use dropout, set this to the dropout probability
                          No dropout is used if this is set to None
         """ 
         super(BRepNetFaceOutputLayer, self).__init__()
@@ -324,7 +321,7 @@ class BRepNetFaceOutputLayer(LightningModule):
 
         # The output layer has the same hidden size as all the other layers
         # but the output size is just the number of classes
-        self.mlp = BRepNetMLP(num_mlp_layers, input_size, 3*hidden_size, output_size, final_layer, dropout)
+        self.mlp = BRepNetMLP(num_mlp_layers, input_size, output_size, output_size, final_layer, dropout)
 
 
     def forward(self, Xf, Xe, Xc, Kf, Ke, Kc, Ce, Cf, Csf):
@@ -371,6 +368,14 @@ class BRepNet(LightningModule):
         input_feature_metadata = data_utils.load_json_data(opts.input_features)
         num_classes = opts.num_classes
 
+        # Curve and surface encoders
+        curve_embedding_size = opts.curve_embedding_size
+        surf_embedding_size = opts.surf_embedding_size
+        if opts.use_face_grids:
+            self.surface_encoder = UVNetSurfaceEncoder(output_dims=surf_embedding_size)
+        if opts.use_edge_grids or opts.use_coedge_grids:
+            self.curve_encoder = UVNetCurveEncoder(in_channels=12, output_dims=curve_embedding_size)
+
         # Set up the names of the segments for clearer 
         # output statistics
         segment_names_file = self.find_segment_names_file(opts)
@@ -389,9 +394,35 @@ class BRepNet(LightningModule):
         num_faces_per_kernel = len(kernel["faces"])
         num_edges_per_kernel = len(kernel["edges"])
         num_coedges_per_kernel = len(kernel["coedges"])
-        num_face_features = len(input_feature_metadata["face_features"])
-        num_edge_features = len(input_feature_metadata["edge_features"])
-        num_coedge_features = len(input_feature_metadata["coedge_features"])
+
+        # Work out the number of face, edge and coedge features
+        num_face_features = 0
+        if opts.use_face_grids:
+            num_face_features += surf_embedding_size
+        if opts.use_face_features:
+            num_face_features += len(input_feature_metadata["face_features"])
+        if num_face_features == 0:
+            # Use padding of zeros(num_faces x 1)
+            num_face_features = 1
+
+        num_edge_features = 0
+        if opts.use_edge_grids:
+            num_edge_features += curve_embedding_size
+        if opts.use_edge_features:
+            num_edge_features += len(input_feature_metadata["edge_features"])
+        if num_edge_features == 0:
+            # Use padding of zeros(num_edges x 1)
+            num_edge_features = 1
+
+        num_coedge_features = 0
+        if opts.use_coedge_grids:
+            num_coedge_features += curve_embedding_size
+        if opts.use_coedge_features:
+            num_coedge_features += len(input_feature_metadata["coedge_features"])
+        if num_coedge_features == 0:
+            # Use padding of zeros(num_coedges x 1)
+            num_coedge_features = 1
+
         
         # The very first layer of the network needs to ingest a concatenated
         # set of feature vectors based on the number of features extracted from the
@@ -408,6 +439,8 @@ class BRepNet(LightningModule):
         self.layers = nn.ModuleList()
 
         dropout = opts.dropout
+        if dropout == 0.0:
+            dropout=None
 
         # The first layer has a size based on in the number of input features
         self.layers.append(BRepNetLayer(num_mlp_layers, mlp_input_size, num_filters, dropout))
@@ -416,9 +449,12 @@ class BRepNet(LightningModule):
         for l in range(2, opts.num_layers):
             self.layers.append(BRepNetLayer(num_mlp_layers, mlp_hidden_size, num_filters, dropout))
 
-        # The output layer is similar, but it generates only
-        # the logits for the faces.
-        self.output_layer = BRepNetFaceOutputLayer(num_mlp_layers, mlp_hidden_size, num_filters, num_classes, dropout) 
+        # The output layer is similar, but it generates only the embeddings for the faces
+        self.output_layer = BRepNetFaceOutputLayer(num_mlp_layers, mlp_hidden_size, num_filters, dropout) 
+
+        # This final classification layer takes the embedding for
+        # each face and projects it down to the number of classes
+        self.classification_layer = nn.Linear(num_filters, num_classes)
 
         # Save the hyper-parameters
         self.save_hyperparameters()
@@ -431,20 +467,29 @@ class BRepNet(LightningModule):
         parser.add_argument("--log_dir",  type=str, default="./logs", help="Path to the directory where you want to write logs")
         parser.add_argument("--input_features", type=str, default="feature_lists/all.json", help="List of features to read")
         parser.add_argument("--kernel", type=str, default="kernels/winged_edge.json", help="Which kernel to use")
-        parser.add_argument("--dropout", type=float, help="If using dropout then this is the dropout probability")
+        parser.add_argument("--dropout", default=0.3, type=float, help="If using dropout then this is the dropout probability")
         parser.add_argument("--segment_names", type=str, help="The segment names file from the dataset")
-        parser.add_argument("--num_layers", type=int, default=2, help="2 gives just the input and output layers")
+        parser.add_argument("--num_layers", type=int, default=5, help="2 gives just the input and output layers")
         parser.add_argument("--num_mlp_layers", type=int, default=2, help="Number of layers in the mlp.  Value > 0")
         parser.add_argument("--num_filters", type=int, default=84, help="Number of filters.  Hyper-parameter s in the paper.  Value > 0")
+        parser.add_argument("--curve_embedding_size", type=int, default=64, help="Size of curve embedding from edge or coedge grids")
+        parser.add_argument("--surf_embedding_size", type=int, default=64, help="Size of surface embedding from face grids")
+        parser.add_argument("--use_face_grids", type=int, default=1, help="Use UV-Net style face grids")
+        parser.add_argument("--use_edge_grids", type=int, default=0, help="Use UV-Net style edge grids, aligned with the 3D curve of the edge.")
+        parser.add_argument("--use_coedge_grids", type=int, default=1, help="Use UV-Net style edge grids for both coedges, aligned with the coedge direction.")
+        parser.add_argument("--use_face_features", type=int, default=0, help="Use face features like primitive type")
+        parser.add_argument("--use_edge_features", type=int, default=0, help="Use edge features like primitive type")
+        parser.add_argument("--use_coedge_features", type=int, default=0, help="Use coedge features (reverse flag)")
         parser.add_argument("--num_classes", type=int, default=8, help="Number of classes used in the dataset")
         parser.add_argument("--learning_rate", type=float, default=0.001, help="Learning rate")
         parser.add_argument('--batch_size', type=int, default=200, help="Number of breps in one batch")
         parser.add_argument('--max_num_faces_per_batch', type=int, help="If defined this sets a limit on the number of faces per batch")
         parser.add_argument('--num_workers', type=int, default=0, help="Number of worker threads")
         parser.add_argument('--use_old_dataloader', action="store_true", help="Use the old dataloader")
-        parser.add_argument('--shuffle_train_set', type=bool, default=True, help="Use shuffling on the training set")
+        parser.add_argument('--shuffle_train_set', type=int, default=1, help="Use shuffling on the training set")
         parser.add_argument("--test_with_validation_set", action="store_true", help="Model to use for testing")
         parser.add_argument("--logit_dir", type=str, help="Save logits to this directory")
+        parser.add_argument("--embeddings_dir", type=str, help="Save embeddings to this directory")
         return parser
 
 
@@ -469,14 +514,61 @@ class BRepNet(LightningModule):
         return None
             
 
-    def forward(self, Xf, Xe, Xc, Kf, Ke, Kc, Ce, Cf, Csf):
+    def create_face_embeddings(self, Xf, Gf, Xe, Ge, Xc, Gc, Kf, Ke, Kc, Ce, Cf, Csf):
         """
-        A forward pass through the network.
+        This creates the embedding for each face.
         """
+
+        # Here we are adding UV-Net style face grids, edge grids and coedge grids.
+        # In each case we can choose to have either the original BRepNet features,
+        # the UV-Net features, both, or an array of zeros which contains no useful
+        # feature information
+        face_features = []
+        if self.opts.use_face_grids:
+            face_features.append(self.surface_encoder(Gf))
+        if self.opts.use_face_features:
+            face_features.append(Xf)
+        if len(face_features) == 0:
+            # Use padding of zeros(num_faces x 1)
+            num_faces = Xf.size(0)
+            face_features.append(torch.zeros((num_faces,1), device=Xf.device))
+        Xf = torch.cat(face_features, dim=1)
+
+        edge_features = []
+        if self.opts.use_edge_grids:
+            edge_features.append(self.curve_encoder(Ge))
+        if self.opts.use_edge_features:
+            edge_features.append(Xe)
+        if len(edge_features) == 0:
+            # Use padding of zeros(num_edges x 1)
+            num_edges = Xe.size(0)
+            edge_features.append(torch.zeros((num_edges,1), device=Xe.device))
+        Xe = torch.cat(edge_features, dim=1)
+
+        coedge_features = []
+        if self.opts.use_coedge_grids:
+            coedge_features.append(self.curve_encoder(Gc))
+        if self.opts.use_coedge_features:
+            coedge_features.append(Xc)
+        if len(coedge_features) == 0:
+            # Use padding of zeros(num_coedges x 1)
+            num_coedges = Xc.size(0)
+            coedge_features.append(torch.zeros((num_coedges,1), device=Xc.device))
+        Xc = torch.cat(coedge_features, dim=1)
+
+        # Now pass this information through the various layers
         for i, layer in enumerate(self.layers):
             Xf, Xe, Xc, Kf, Ke, Kc, Ce, Cf, Csf = layer(Xf, Xe, Xc, Kf, Ke, Kc, Ce, Cf, Csf)
 
         return self.output_layer(Xf, Xe, Xc, Kf, Ke, Kc, Ce, Cf, Csf)
+
+
+    def forward(self, Xf, Xe, Xc, Kf, Ke, Kc, Ce, Cf, Csf):
+        """
+        A forward pass through the network.
+        """
+        face_embeddings = self.create_face_embeddings(Xf, Xe, Xc, Kf, Ke, Kc, Ce, Cf, Csf)
+        return self.classification_layer(face_embeddings)
 
 
     def total_num_parameters(self):
@@ -513,14 +605,17 @@ class BRepNet(LightningModule):
         return torch.argmax(norm_seg_scores, dim=1)
 
 
-    def brepnet_step(self, batch, batch_idx, save_logits):
+    def brepnet_step(self, batch, batch_idx, save_segmentation_output):
         """
         A train or validation step for the BRepNet network on one batch
         """
         # Unpack the tensor data
         Xf = batch["face_features"]
+        Gf = batch["face_point_grids"]
         Xe = batch["edge_features"]
+        Ge = batch["edge_point_grids"]
         Xc = batch["coedge_features"]
+        Gc = batch["coedge_point_grids"]
         Kf = batch["face_kernel_tensor"]
         Ke = batch["edge_kernel_tensor"]
         Kc = batch["coedge_kernel_tensor"]
@@ -529,13 +624,16 @@ class BRepNet(LightningModule):
         Csf = batch["coedges_of_big_faces"]
 
         # Make the forward pass through the network
+        face_embeddings = self.create_face_embeddings(Xf, Gf, Xe, Ge, Xc, Gc, Kf, Ke, Kc, Ce, Cf, Csf)
+
         # The tensor logits is now size [ num_faces_in_batch x num_classes ]
-        segmentation_scores = self(Xf, Xe, Xc, Kf, Ke, Kc, Ce, Cf, Csf)
+        segmentation_scores = self.classification_layer(face_embeddings)
 
         # We may want to save the logits for use in downstream procedures
         # like visualization or CAD automation.  We save them here is requested
-        if save_logits:
+        if save_segmentation_output:
             self.save_logits(batch, segmentation_scores.detach())
+            self.save_embeddings(batch, face_embeddings.detach())
 
         # Now find the loss
         labels = batch["labels"]
@@ -578,7 +676,8 @@ class BRepNet(LightningModule):
         
 
     def training_step(self, batch, batch_idx):
-        output = self.brepnet_step(batch, batch_idx, False)
+        save_segmentation_output = False
+        output = self.brepnet_step(batch, batch_idx, save_segmentation_output)
                 
         # Log some data to tensorboard
         self.log("loss", output["loss"].item(), on_step=True, on_epoch=False)
@@ -593,8 +692,8 @@ class BRepNet(LightningModule):
         Here we call the training step and then rename the 
         keys so the logs are correct
         """
-        save_logits = self.opts.logit_dir is not None
-        output = self.brepnet_step(batch, batch_idx, save_logits)
+        save_segmentation_output = False
+        output = self.brepnet_step(batch, batch_idx, save_segmentation_output)
         self.log("validation/loss", output["loss"].item(), on_step=False, on_epoch=True, sync_dist=True, prog_bar=False)
         return output
 
@@ -654,8 +753,8 @@ class BRepNet(LightningModule):
         """
         Test on one batch
         """
-        save_logits = self.opts.logit_dir is not None
-        return self.brepnet_step(batch, batch_idx, save_logits)
+        save_segmentation_output = self.opts.logit_dir is not None or self.opts.embeddings_dir is not None
+        return self.brepnet_step(batch, batch_idx, save_segmentation_output)
                 
 
     def test_epoch_end(self, outputs):
@@ -684,6 +783,8 @@ class BRepNet(LightningModule):
         """
         Save logits for this batch
         """
+        if self.opts.logit_dir is None:
+            return
         output_folder = Path(self.opts.logit_dir)
         if not output_folder.exists():
             output_folder.mkdir()
@@ -692,7 +793,7 @@ class BRepNet(LightningModule):
         # split_batch info.  This splits up the logits 
         # into tensors for each solid
         for split_solid, file_stem in zip(batch["split_batch"], batch["file_stems"]):
-            face_seg_scores_for_solid = batch_face_seg_scores[split_solid["face_indices"]]
+            face_seg_scores_for_solid = batch_face_seg_scores[split_solid["face_indices"]].cpu()
 
             # The segmentation scores are not normalized.  We want to convert these
             # to logits (probabilities that a face is of each class)
@@ -704,7 +805,29 @@ class BRepNet(LightningModule):
             # Finally use numpy to save the logits information in text format
             np.savetxt(output_pathname, face_logits_for_solid.numpy())
             
+    
 
+    def save_embeddings(self, batch, batch_face_embeddings):
+        """
+        Save the face embeddings for this batch
+        """
+        if self.opts.embeddings_dir is None:
+            return
+        output_folder = Path(self.opts.embeddings_dir)
+        if not output_folder.exists():
+            output_folder.mkdir()
+
+        # We need to split the logits based on the 
+        # split_batch info.  This splits up the logits 
+        # into tensors for each solid
+        for split_solid, file_stem in zip(batch["split_batch"], batch["file_stems"]):
+            face_embeddings_for_solid = batch_face_embeddings[split_solid["face_indices"]].cpu()
+
+            # Now find the pathname to save the logits file
+            output_pathname = output_folder / (file_stem + ".embeddings")
+
+            # Finally use numpy to save the logits information in text format
+            np.savetxt(output_pathname, face_embeddings_for_solid.numpy())
 
 
     def train_dataloader(self):

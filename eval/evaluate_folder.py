@@ -129,7 +129,16 @@ def do_eval(args):
         logit_dir.mkdir()
     args.logit_dir = logit_dir
 
-    brepnet = BRepNet.load_from_checkpoint(args.model, opts=args)
+    embeddings_dir = dataset_dir / "embeddings"
+    if not embeddings_dir.exists():
+        embeddings_dir.mkdir()
+    args.embeddings_dir = embeddings_dir
+
+    if args.model is not None:
+        brepnet = BRepNet.load_from_checkpoint(args.model, opts=args)
+    else:
+        print("WARNING!! No pre-trained model given.  Are you sure you want to evaluate with an untrained model?")
+        brepnet = BRepNet(args)
     trainer = Trainer.from_argparse_args(args)
     trainer.test(brepnet)
 
@@ -137,19 +146,34 @@ def get_argument_parser():
     parser = argparse.ArgumentParser()
     parser = Trainer.add_argparse_args(parser)
     parser = BRepNet.add_model_specific_args(parser)
-    parser.add_argument("--model", type=str, required=True,  help="Model to load use for evaluation")
+    parser.add_argument("--model", type=str, help="Model to load use for evaluation")
     return parser
 
-def evaluate_folder(step_folder, feature_standardization, model, input_features=None):
+def evaluate_folder(
+        step_folder, 
+        feature_standardization, 
+        model=None, 
+        input_features=None, 
+        extra_args=None
+    ):
     # We need to set up all the default brepnet arguments.  The easiest
     # way to do it is to use the same argument parser
     parser = get_argument_parser()
     args_to_parse = [
         "--dataset_dir", str(step_folder),
         "--dataset_file", str(feature_standardization),
-        "--model", str(model),
         "--segment_names", "example_files/pretrained_models/segment_names.json"
     ]
+    if model is None:
+        print("Warning! No pretrained model given.  Using random network!")
+    else:
+        args_to_parse.extend(
+            [ "--model", str(model) ]
+        )
+
+    if extra_args is not None:
+        args_to_parse.extend(extra_args)
+
     if input_features is not None:
         args_to_parse.append("--input_features")
         args_to_parse.append(str(input_features))

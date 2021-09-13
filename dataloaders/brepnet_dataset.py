@@ -348,11 +348,26 @@ class BRepNetDataset(Dataset):
         Xf, Xe, Xc = self.build_input_feature_tensors(body_data)
         Kf, Ke, Kc = self.build_kernel_tensors(body_data)
 
+        # Gf is the face point grids tensor in the order
+        # the faces appear in the solid
+        #
+        # Gc is the coedge point grids in the order the 
+        # coedges appear in the solid.  The points
+        # in the grid are ordered based on the topological
+        # direction of the coedge
+        #
+        # lcs is the local coordinate systems for each coedge
+        Gf, Gc, lcs = self.build_point_grids(body_data)
+
         # We need to rearrange the order of the faces so that
         # faces with more than max_coedges_per_face are at the 
         # end of the array
         max_coedges_per_face = 30
         Ce = self.build_coedges_of_edges_tensor(body_data)
+
+        # Try building point grids from the left coedges 
+        # of each edge
+        Ge = self.build_edge_grids_from_left_coedges(Gc, Ce, body_data)
 
         Cf, Csf, new_to_old_face_indices = self.build_coedges_of_faces_tensor(
             body_data, 
@@ -363,6 +378,7 @@ class BRepNetDataset(Dataset):
 
         Kf_perm = old_to_new_face_indices[Kf]
         Xf_perm = Xf[new_to_old_face_indices]
+        Gf_perm = Gf[new_to_old_face_indices]
 
         # If we are evaluating a pre-trained model on a dataset
         # with no labels then the label_dir will be none.  In this
@@ -375,8 +391,12 @@ class BRepNetDataset(Dataset):
 
         data = {
             "face_features": Xf_perm,
+            "face_point_grids": Gf_perm,
             "edge_features": Xe,
+            "edge_point_grids": Ge,
             "coedge_features": Xc,
+            "coedge_point_grids": Gc,
+            "coedge_lcs": lcs,
             "face_kernel_tensor": Kf_perm,
             "edge_kernel_tensor": Ke,
             "coedge_kernel_tensor": Kc,
@@ -476,6 +496,37 @@ class BRepNetDataset(Dataset):
 
         # Convert the tensors to floats after standardization 
         return feature_tensor_standadized.float()
+
+    def build_point_grids(self, body_data):
+        """
+        Read the point grid and LCS data and convert it to
+        pytorch
+        """
+        face_point_grids = torch.from_numpy(body_data["face_point_grids"])
+        coedge_point_grids = torch.from_numpy(body_data["coedge_point_grids"])
+        coedge_lcs = torch.from_numpy(body_data["coedge_lcs"])
+        return face_point_grids.float(), coedge_point_grids.float(), coedge_lcs.float()
+
+
+    def build_edge_grids_from_left_coedges(self, Gc, Ce, body_data):
+        """
+        Try building point grids from the left coedges 
+        of each edge
+        """
+        # Lets do this the slow way to start with
+        num_edges = Ce.size(0)
+        left_coedge_indices = torch.zeros(num_edges, dtype=torch.int64)
+        reverse_flags = body_data["coedge_reverse_flags"]
+        
+        for edge_index in range(num_edges):
+            coedges = Ce[edge_index, :]
+            first_coedge_index = coedges[0]
+            second_coedge_index = coedges[1]
+            if reverse_flags[second_coedge_index]==1:
+                left_coedge_indices[edge_index] = first_coedge_index
+            else: 
+                left_coedge_indices[edge_index] = second_coedge_index
+        return Gc[left_coedge_indices]
 
 
     def	build_kernel_tensor_from_topology(self, n, p, m, e, f, kernel):
@@ -777,11 +828,16 @@ def brepnet_collate_fn(data_list):
     """
     Xf_small_faces = []
     Xf_big_faces = []
+    Gf_small_faces = []
+    Gf_big_faces = []
     labels_small_faces = []
     labels_big_faces = []
 
     Xe = []
+    Ge = []
     Xc = []
+    Gc = []
+    lcs = []
 
     Ke = [] # Edge indices for each coedge
     Kc = [] # Coedge indices for each coedge
@@ -808,9 +864,12 @@ def brepnet_collate_fn(data_list):
         # the tensors for each B-Rep
         num_edges = data["edge_features"].shape[0]
         Xe.append(data["edge_features"])
+        Ge.append(data["edge_point_grids"])
 
         num_coedges = data["coedge_features"].shape[0]
         Xc.append(data["coedge_features"])
+        Gc.append(data["coedge_point_grids"])
+        lcs.append(data["coedge_lcs"])
 
         # For edge and coedge indices things are easy.  We just need to 
         # add the offsets to the arrays
@@ -830,11 +889,16 @@ def brepnet_collate_fn(data_list):
         num_small_faces = data["coedges_of_small_faces"].shape[0]
         num_big_faces = len(data["coedges_of_big_faces"])
         Xf = data["face_features"]
+        Gf = data["face_point_grids"]
         assert num_small_faces + num_big_faces == Xf.shape[0]
+        assert num_small_faces + num_big_faces == Gf.shape[0]
         
         # We need to slice the face feature tensor
         Xf_small_faces.append(Xf[:num_small_faces])      
         Xf_big_faces.extend(Xf[num_small_faces:])
+
+        Gf_small_faces.append(Gf[:num_small_faces])
+        Gf_big_faces.append(Gf[num_small_faces:])
 
         labels = data["labels"]
         labels_small_faces.append(labels[:num_small_faces])
@@ -907,8 +971,12 @@ def brepnet_collate_fn(data_list):
         
     batch_data = {
         "face_features": concatenate_tensor_arrays(Xf_small_faces, Xf_big_faces, unsqueeze=True),
+        "face_point_grids": concatenate_tensor_arrays(Gf_small_faces, Gf_big_faces, unsqueeze=True),
         "edge_features": torch.cat(Xe),
+        "edge_point_grids": torch.cat(Ge),
         "coedge_features": torch.cat(Xc),
+        "coedge_point_grids": torch.cat(Gc),
+        "coedge_lcs": torch.cat(lcs),
         "face_kernel_tensor": torch.cat(Kf),
         "edge_kernel_tensor": torch.cat(Ke),
         "coedge_kernel_tensor": torch.cat(Kc),

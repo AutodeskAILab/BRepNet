@@ -38,9 +38,13 @@ conda env create -f environment.yml
 conda activate brepnet
 ```
 
-For GPU training you will need to change the pytorch install to include your cuda version.  i.e.
+For GPU training you will need to change the pytorch install to include your cuda version.  i.e. for cuda 11.1
 ```
 conda install pytorch cudatoolkit=11.1 -c pytorch -c conda-forge
+```
+or for cuda 11.0
+```
+conda install pytorch==1.7.1 torchvision==0.8.2 torchaudio==0.7.2 cudatoolkit=11.0 -c pytorch
 ```
 
 For training with multiple workers you may hit errors of the form `OSError: [Errno 24] Too many open files`.  In this case you need to increase the number of available file handles on the machine using 
@@ -74,13 +78,18 @@ You are then ready to train the model.  The quickstart script should exit tellin
 python -m train.train \
   --dataset_file /path/to/where_you_keep_data/s2.0.0/processed/dataset.json \
   --dataset_dir  /path/to/where_you_keep_data/s2.0.0/processed/ \
-  --max_epochs 50
+  --max_epochs 200
 ```
 
 You may want to adjust the `--num_workers` and `--gpus` parameters to match your machine.  The model runs with the pytorch-lightning `ddp-spawn` mode, so you can choose either 1 worker thread and multiple gpus or multiple threads and a single gpu.   The options and hyper-parameters for BRepNet can be seen in `BRepNet.add_model_specific_args` in [brepnet.py](models/brepnet.py).   For a full list of all hyper-parameters including those defined in pytorch-lightning see
 
 ```
 python -m train.train --help
+```
+The settings above take advantage of [UV-Net](https://github.com/AutodeskAILab/UV-Net) features, which are strongly recommended as a way to get geometric information into the network.  To reproduce the results in the [BRepNet paper](https://arxiv.org/pdf/2104.00706.pdf), which did not include these features, you should run the following script.
+
+```
+train/reproduce_paper_results.sh /path/to/where_you_keep_data/s2.0.0
 ```
 
 ### Monitoring the loss, accuracy and IoU
@@ -119,6 +128,8 @@ python -m eval.evaluate_folder  \
 This will loop over all step or stp files in `./example_files/step_examples` and create  "logits" files in `example_files/step_examples/temp_working/logits`.  The logits files contain one row for each face in the step data.  The columns give the probabilities that the corresponding face belongs to a given segment.
 
 The notebook [find_and_display_segmentation.ipynb](notebooks/find_and_display_segmentation.ipynb) runs through the entire process of evaluating the model and displaying the predicted segmentation.
+
+The [notebooks](notebooks) folder also contains other useful utilities allowing you to [visualize the information extracted from the B-Rep](notebooks/view_npz_files.ipynb) and [use the BRepNet embeddings to search for models containing similar features](notebooks/brepnet_similarity_search.ipynb).
 
 ## Running the tests
 If you need to run the tests then this can be done using 

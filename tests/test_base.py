@@ -47,4 +47,7 @@ class TestBase(unittest.TestCase):
 
     def remove_cache_folder(self, data_dir):
         cache_dir = data_dir / "cache"
-        shutil.rmtree(cache_dir, ignore_errors=True)
+        self.remove_folder(cache_dir)
+
+    def remove_folder(self, dir):
+        shutil.rmtree(dir, ignore_errors=True)
