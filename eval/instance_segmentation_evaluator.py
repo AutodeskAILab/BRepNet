@@ -414,6 +414,7 @@ class InstanceSegmentationEvaluator:
         base_face_indices_for_instance = self.base_face_indices_for_instances[instance]
         for base_face_index in base_face_indices_for_instance:
             if not self.check_face_normals_align_with_vector(base_face_index, extrusion_direction):
+                #debug_show_solid(self.solid, faces_to_highlight=[base_face_index])
                 problems.append(
                     {
                         "check": "check_base_face_normals_for_instance",
