@@ -20,7 +20,7 @@ from occwl.entity_mapper import EntityMapper
 import occwl.geometry.geom_utils as geom_utils
 from occwl.viewer import Viewer
 
-def debug_show_solid(solid, faces_to_highlight=None):
+def debug_show_solid(solid, faces_to_highlight=None, faces_to_highlight2=[]):
     viewer = Viewer()
     if faces_to_highlight is None:
         viewer.display(solid)
@@ -28,6 +28,8 @@ def debug_show_solid(solid, faces_to_highlight=None):
         for face_index, face in enumerate(solid.faces()):
             if face_index in faces_to_highlight:
                 viewer.display(face, color="yellow")
+            elif face_index in faces_to_highlight2:
+                viewer.display(face, color="red")
             else:
                 viewer.display(face)
     viewer.show()
@@ -87,15 +89,17 @@ class InstanceSegmentationEvaluator:
         return instance_to_faces
 
     def find_base_face_indices_for_instances(self):
-        base_face_indices_for_instances = []
-        for instance_faces in self.instance_to_faces.values():
+        base_face_indices_for_instances = {}
+        for instance_index in self.instance_to_faces:
+            instance_index = int(instance_index)
+            instance_faces = self.instance_to_faces[instance_index]
             base_face_indices = []
             for face_index in instance_faces:
                 segment = self.get_segment_type_for_face_index(face_index)
                 is_base_face = self.is_base_segment(segment)
                 if is_base_face:
                     base_face_indices.append(face_index)
-            base_face_indices_for_instances.append(base_face_indices)
+            base_face_indices_for_instances[instance_index] = base_face_indices
         return base_face_indices_for_instances
 
 
@@ -139,7 +143,8 @@ class InstanceSegmentationEvaluator:
 
     def find_extrusion_directions_for_instances(self):
         extrusion_directions = {}
-        for instance, base_face_indices in enumerate(self.base_face_indices_for_instances):
+        for instance in self.base_face_indices_for_instances:
+            base_face_indices = self.base_face_indices_for_instances[instance]
             if len(base_face_indices) > 0:
                 first_face = base_face_indices[0]
                 if first_face in self.base_face_planes:
@@ -259,10 +264,11 @@ class InstanceSegmentationEvaluator:
 
     def check_operation_type_consistent_with_instance(self):
         problems = []
-        self.instance_op_types = []
-        for faces_indices_in_instance in self.instance_to_faces.values():
+        self.instance_op_types = {}
+        for instance in self.instance_to_faces:
+            faces_indices_in_instance = self.instance_to_faces[instance]
             op_type, problems_for_instance = self.check_operation_type_consistent_within_an_instance(faces_indices_in_instance)
-            self.instance_op_types.append(op_type)
+            self.instance_op_types[instance] = op_type
             problems.extend(problems_for_instance)
         return problems
 
@@ -292,7 +298,8 @@ class InstanceSegmentationEvaluator:
 
     def check_base_faces_planar(self):
         problems = []
-        for base_face_indices_for_instance in self.base_face_indices_for_instances:
+        for instance in self.base_face_indices_for_instances:
+            base_face_indices_for_instance = self.base_face_indices_for_instances[instance]
             for base_face_index in base_face_indices_for_instance:
                 face = self.faces[base_face_index]
                 if face.surface_type() != "plane":
@@ -406,7 +413,7 @@ class InstanceSegmentationEvaluator:
         problems = []
         op_type = self.instance_op_types[instance]
         if not instance in self.extrusion_directions_for_instances:
-            assert not instance in self.base_face_indices_for_instances
+            assert len(self.base_face_indices_for_instances[instance]) == 0
             # This instance has not base faces any more
             return problems
 
@@ -423,6 +430,7 @@ class InstanceSegmentationEvaluator:
                 )
         if len(problems) > 0:
             # Can't continue checking if this condition isn't met
+            debug_show_solid(self.solid, faces_to_highlight=base_face_indices_for_instance)
             return problems
         base_face_groups = self.find_coplanar_face_groups(base_face_indices_for_instance, extrusion_direction)
         self.base_face_groups_for_instances[instance] = base_face_groups
@@ -460,6 +468,7 @@ class InstanceSegmentationEvaluator:
                 )
         else:
             if not self.check_face_normals_parallel_to_vector(base_face_groups[0]["faces"], extrusion_direction):
+                debug_show_solid(self.solid, faces_to_highlight=base_face_groups[0]["faces"])
                 problems.append(
                     {
                         "check": "check_base_face_normals_for_instance",
@@ -487,7 +496,7 @@ class InstanceSegmentationEvaluator:
     def check_barrel_face_normals_for_instance(self, instance):
         problems = []
         if not instance in self.extrusion_directions_for_instances:
-            assert not instance in self.base_face_indices_for_instances
+            assert len(self.base_face_indices_for_instances[instance]) == 0
             # This instance has not base faces any more
             return problems
 
@@ -497,6 +506,11 @@ class InstanceSegmentationEvaluator:
             is_base_face = self.is_base_segment(segment)
             if not is_base_face:
                 if not self.check_face_normals_perpendicular_to_vector(face_index, extrusion_direction):
+                    debug_show_solid(
+                        self.solid, 
+                        faces_to_highlight=self.base_face_indices_for_instances[instance],
+                        faces_to_highlight2 = [ face_index ]
+                    )
                     problems.append(
                         {
                             "check": "check_barrel_face_normals_for_instance",
@@ -649,8 +663,11 @@ def only_extrude_and_cut(file):
 
 def get_argument_parser():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--construction_dataset_folder", type=str, help="Dataset folder with the construction layout")
+    parser.add_argument("--construction_dataset_file", type=str, help="Dataset file")
     parser.add_argument("--dataset_folder", type=str, help="folder with full dataset")
     parser.add_argument("--step_file", type=str, help="A step file containing the data")
+    parser.add_argument("--step_folder", type=str, help="Folder containing step data")
     parser.add_argument("--instance_file", type=str, help="For each face we have an integer representing the instance")
     parser.add_argument("--timeline_info", type=str, help="The timeline_info file for the solid")
     parser.add_argument("--semantic_file", type=str, help="For each face we have an integer representing the segment")
@@ -696,14 +713,59 @@ def evaluate_folder(args):
             for problem in problems:
                 print(problem)
 
-    print("Completed evaluate_single_file()")
+    print("Completed evaluate_folder()")
+
+def load_npz(file):
+    return np.load(file)
+
+
+def evaluate_construction_dataset_folder(args):
+    dataset_file = Path(args.construction_dataset_file)
+    dataset_info = data_utils.load_json_data(dataset_file)
+    folder = Path(args.construction_dataset_folder)
+    step_folder = Path(args.step_folder)
+    seg_folder = folder / "semantics"
+    instance_folder = folder / "instance"
+    for model_name in dataset_info["modelname_to_count"]:
+        count = dataset_info["modelname_to_count"][model_name]
+        index = -1
+        c = 0
+        while c < count:
+            index = index + 1
+            assert index < 1000, "This has hung"
+            model = f"{model_name}_{index:04d}"
+            step_file = step_folder / (model + ".step")
+            if not step_file.exists():
+                continue
+            seg_file = seg_folder / (f"{model_name}_{c}_semantic.npz")
+            if not seg_file.exists():
+                continue
+            instance_file = instance_folder / (f"{model_name}_{c}_instance.npz")
+            if not instance_file.exists():
+                continue
+            #print(f"Checking {step_file}")
+            c = c + 1
+            face_to_instance = load_npz(instance_file)
+            face_to_seg = load_npz(seg_file)
+            solid = load_compsolid(step_file)
+            problems = evaluate_example(solid, face_to_instance, face_to_seg)
+            if len(problems) >0:
+                print(f"Problem with {step_file}")
+                for problem in problems:
+                    print(problem)
+            
+
+    print("Completed evaluate_construction_dataset_folder()")
+
 
 
 if __name__ == '__main__':
     parser = get_argument_parser()
     args = parser.parse_args()
 
-    if args.dataset_folder is not None:
+    if args.construction_dataset_folder is not None:
+        evaluate_construction_dataset_folder(args)
+    elif args.dataset_folder is not None:
         evaluate_folder(args)
     else:
         evaluate_single_file(args)
