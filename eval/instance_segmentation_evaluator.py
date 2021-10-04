@@ -2,11 +2,12 @@ import argparse
 from pathlib import Path
 import numpy as np
 
+from OCC.Core.TopAbs import TopAbs_REVERSED
 from OCC.Core.TopLoc import TopLoc_Location
 from OCC.Core.STEPControl import STEPControl_Reader
 from OCC.Core.BRep import BRep_Tool
 from OCC.Core.GeomProjLib import geomprojlib
-from OCC.Core.Geom import Geom_Plane
+from OCC.Core.Geom import Geom_Plane, Geom_TrimmedCurve
 from OCC.Core.Geom2dAPI import Geom2dAPI_InterCurveCurve
 from OCC.Core.Geom2dAPI import Geom2dAPI_ProjectPointOnCurve
 from OCC.Core.GeomAPI import GeomAPI_ProjectPointOnSurf
@@ -34,6 +35,38 @@ def debug_show_solid(solid, faces_to_highlight=None, faces_to_highlight2=[]):
                 viewer.display(face)
     viewer.show()
 
+def display_2d_curves(curves, curves_to_highlight=set(), point=None):
+    import logging
+    logging.getLogger('matplotlib').setLevel(logging.WARNING)
+    import matplotlib.pyplot as plt
+    import matplotlib.lines as mlines
+
+    fig, ax = plt.subplots()
+
+    for curve in curves:
+        if curve in curves_to_highlight:
+            color = "red"
+        else:
+            color = "black"
+
+        num_points = 10
+        tmin = curve.FirstParameter()
+        tmax = curve.LastParameter()
+        dt = (tmax-tmin)/(num_points-1)
+        pts = []
+        for i in range(num_points):
+            t = tmin + dt*i
+            pt2d = curve.Value(t)
+            pts.append((pt2d.X(), pt2d.Y()))
+        pts = np.asarray(pts)
+        l = mlines.Line2D(pts[:,0], pts[:,1], color=color)
+        ax.add_line(l)
+        if point is not None:
+            plt.plot(point.X(), point.Y(), 'o', color='black')
+            
+    ax.axis('equal')
+    plt.axis('off')
+    plt.show()
 
 
 class InstanceSegmentationEvaluator:
@@ -180,7 +213,9 @@ class InstanceSegmentationEvaluator:
 
     def find_closest_param_on_2d_curve(self, point2d, curve2d):
         proj_curve = Geom2dAPI_ProjectPointOnCurve(point2d, curve2d)
-        u = proj_curve.Parameter(1)
+        u = proj_curve.LowerDistanceParameter() 
+        dist = proj_curve.LowerDistance()
+        assert dist < 0.1
         return u
 
     def trim_curve2(self, start, end, curve):
@@ -200,17 +235,29 @@ class InstanceSegmentationEvaluator:
         for edge in face.edges():
             curve = edge.curve()
             u_bound = edge.u_bounds()
+            curve_trimmed = Geom_TrimmedCurve(curve,  u_bound.a, u_bound.b)
             try:
-                curve2 = gpl.Curve2d(curve, u_bound.a, u_bound.b, plane)
-                if curve2 is not None:
-                    start = self.project_point_to_plane(edge.start_vertex().point(), plane)
-                    end = self.project_point_to_plane(edge.end_vertex().point(), plane)
-                    trimmed = self.trim_curve2(start, end, curve2)
-                    curves_2d.append(trimmed)
+                curve2 = gpl.Curve2d(curve_trimmed, u_bound.a, u_bound.b, plane)
             except:
                 # This problem is expected when a line
                 # is projected to a plane resulting in a point
-                pass
+                curve2 = None
+            if curve2 is not None:
+                ts = curve2.FirstParameter()
+                te = curve2.LastParameter()
+                assert ts > -1e10
+                assert te < 1e10
+                #vs = edge.start_vertex()
+                #vs_is_reversed = vs.topods_shape().Orientation() == TopAbs_REVERSED
+                #ve = edge.start_vertex()
+                #ve_is_reversed = ve.topods_shape().Orientation() == TopAbs_REVERSED
+                #start = self.project_point_to_plane(edge.start_vertex().point(), plane)
+                #end = self.project_point_to_plane(edge.end_vertex().point(), plane)
+                #trimmed = self.trim_curve2(start, end, curve2)
+
+                trimmed_2d = Geom2d_TrimmedCurve(curve2, ts, te)
+                curves_2d.append(trimmed_2d)
+
         return curves_2d
 
 
@@ -235,9 +282,9 @@ class InstanceSegmentationEvaluator:
         return projected_barrel_edges
 
     def project_barrel_edges_to_extrude_plane(self):
-        projected_barrel_edges = []
-        for instance, base_face_indices in enumerate(self.base_face_indices_for_instances):
-            projected_barrel_edges.append(self.project_barrel_edges_to_extrude_plane_for_instance(instance))
+        projected_barrel_edges = {}
+        for instance in self.base_face_indices_for_instances:
+            projected_barrel_edges[instance] = self.project_barrel_edges_to_extrude_plane_for_instance(instance)
         return projected_barrel_edges
 
     def evaluate(self):
@@ -259,7 +306,10 @@ class InstanceSegmentationEvaluator:
         problems.extend(self.check_base_face_normals())
         problems.extend(self.check_barrel_face_normals())
         problems.extend(self.check_barrel_faces_between_base_faces())
-        problems.extend(self.check_intersections())
+        if len(problems) == 0:
+            # If any problems were detected then the intersection check will
+            # fail for sure
+            problems.extend(self.check_intersections())
         return problems
 
     def check_operation_type_consistent_with_instance(self):
@@ -306,7 +356,7 @@ class InstanceSegmentationEvaluator:
                     problems.append(
                         {
                             "check": "base_faces_planar",
-                            "error": f"Face {face_index} is not planar"
+                            "error": f"Face {base_face_index} is not planar"
                         }
                     )
 
@@ -325,6 +375,7 @@ class InstanceSegmentationEvaluator:
         assert v2_norm > eps
         v2 /= v2_norm
         d = np.dot(v1, v2)
+        d = np.clip(d, 0, 1)
         return np.arccos(d)
 
     def vectors_parallel_or_anti_parallel(self, v1, v2):
@@ -430,7 +481,7 @@ class InstanceSegmentationEvaluator:
                 )
         if len(problems) > 0:
             # Can't continue checking if this condition isn't met
-            debug_show_solid(self.solid, faces_to_highlight=base_face_indices_for_instance)
+            #debug_show_solid(self.solid, faces_to_highlight=base_face_indices_for_instance, faces_to_highlight2=[base_face_index])
             return problems
         base_face_groups = self.find_coplanar_face_groups(base_face_indices_for_instance, extrusion_direction)
         self.base_face_groups_for_instances[instance] = base_face_groups
@@ -468,7 +519,7 @@ class InstanceSegmentationEvaluator:
                 )
         else:
             if not self.check_face_normals_parallel_to_vector(base_face_groups[0]["faces"], extrusion_direction):
-                debug_show_solid(self.solid, faces_to_highlight=base_face_groups[0]["faces"])
+                #debug_show_solid(self.solid, faces_to_highlight=base_face_groups[0]["faces"])
                 problems.append(
                     {
                         "check": "check_base_face_normals_for_instance",
@@ -487,7 +538,8 @@ class InstanceSegmentationEvaluator:
         
     def check_base_face_normals(self):
         problems = []
-        for instance, base_faces in enumerate(self.base_face_indices_for_instances):
+        for instance in self.base_face_indices_for_instances:
+            base_faces = self.base_face_indices_for_instances[instance]
             problems_for_instance = self.check_base_face_normals_for_instance(instance)
             problems.extend(problems_for_instance)
         return problems
@@ -496,7 +548,8 @@ class InstanceSegmentationEvaluator:
     def check_barrel_face_normals_for_instance(self, instance):
         problems = []
         if not instance in self.extrusion_directions_for_instances:
-            assert len(self.base_face_indices_for_instances[instance]) == 0
+            if instance in self.base_face_indices_for_instances:
+                assert len(self.base_face_indices_for_instances[instance]) == 0
             # This instance has not base faces any more
             return problems
 
@@ -506,17 +559,19 @@ class InstanceSegmentationEvaluator:
             is_base_face = self.is_base_segment(segment)
             if not is_base_face:
                 if not self.check_face_normals_perpendicular_to_vector(face_index, extrusion_direction):
-                    debug_show_solid(
-                        self.solid, 
-                        faces_to_highlight=self.base_face_indices_for_instances[instance],
-                        faces_to_highlight2 = [ face_index ]
-                    )
+                    if len(problems) == 0:
+                        debug_show_solid(
+                            self.solid, 
+                            faces_to_highlight=self.base_face_indices_for_instances[instance],
+                            faces_to_highlight2 = [ face_index ]
+                        )
                     problems.append(
                         {
                             "check": "check_barrel_face_normals_for_instance",
                             "error": f"Barrel face {face_index} with semantic label {segment} normal not perpendicular to extrusion direction"
                         }
                     )
+
         return problems
 
 
@@ -581,7 +636,7 @@ class InstanceSegmentationEvaluator:
         
     def check_intersections(self):
         problems = []
-        for instance, base_faces in enumerate(self.base_face_indices_for_instances):
+        for instance in self.base_face_indices_for_instances:
             problems_for_instance = self.check_intersections_for_instance(instance)
             problems.extend(problems_for_instance)
         return problems
@@ -605,13 +660,22 @@ class InstanceSegmentationEvaluator:
             for face_index2 in projected_barrel_edges_for_faces:
                 barrel_edges_for_face2 = projected_barrel_edges_for_faces[face_index2]
                 if face_index1 < face_index2:
-                    for barrel_edges1 in barrel_edges_for_face1:
-                        for barrel_edges2 in barrel_edges_for_face2:
-                            intersector = Geom2dAPI_InterCurveCurve(barrel_edges1, barrel_edges2)
+                    for barrel_edge1 in barrel_edges_for_face1:
+                        for barrel_edge2 in barrel_edges_for_face2:
+                            intersector = Geom2dAPI_InterCurveCurve(barrel_edge1, barrel_edge2)
                             for i in range(1, intersector.NbPoints()+1):
                                 point = intersector.Point(i)
-                                if self.is_end_point(point, barrel_edges1) or self.is_end_point(point, barrel_edges2):
+                                if self.is_end_point(point, barrel_edge1) or self.is_end_point(point, barrel_edge2):
                                     continue
+                                if len(problems) == 0:
+                                    self.debug_show_intersections(
+                                        instance,
+                                        face_index1,
+                                        face_index2,
+                                        barrel_edge1,
+                                        barrel_edge2,
+                                        point
+                                    )
                                 problems.append({
                                     "check": "check_intersections_for_instance",
                                     "error": f"Intersection found between projections of face {face_index1} and {face_index2}"
@@ -620,6 +684,35 @@ class InstanceSegmentationEvaluator:
 
         
 
+    def debug_show_intersections(
+            self,
+            instance,
+            face1,
+            face2,
+            barrel_edge1,
+            barrel_edge2,
+            point
+        ):
+        base_faces = self.base_face_indices_for_instances[instance]
+        barrel_faces = [ face1, face2 ]
+        debug_show_solid(self.solid, faces_to_highlight=base_faces, faces_to_highlight2=barrel_faces)
+        
+        projected_barrel_edges_for_faces = self.barrel_edges_projected_onto_plane[instance]
+
+        curves = [ c for c in projected_barrel_edges_for_faces[face1] ]
+        curves.extend([ c for c in projected_barrel_edges_for_faces[face2] ])
+        curves_to_highlight = set([barrel_edge1, barrel_edge2])
+        display_2d_curves(curves, curves_to_highlight, point)
+
+        base_faces = self.base_face_indices_for_instances[instance]
+        plane = self.base_face_planes[base_faces[0]]
+        geom_plane = Geom_Plane(
+            geom_utils.numpy_to_gp(plane["point"]),
+            geom_utils.numpy_to_gp_dir(plane["normal"])
+        )
+
+        self.project_barrel_edges_to_extrude_plane_for_face(geom_plane, face1)
+        self.project_barrel_edges_to_extrude_plane_for_face(geom_plane, face2)
 
 
 
@@ -751,12 +844,24 @@ def evaluate_construction_dataset_folder(args):
             problems = evaluate_example(solid, face_to_instance, face_to_seg)
             if len(problems) >0:
                 print(f"Problem with {step_file}")
+                print(f"\"--step_file\", \"{step_file}\",")
+                print(f"\"--semantic_file\", \"{seg_file}\",")
+                print(f"\"--instance_file\",\"{instance_file}\"")
                 for problem in problems:
                     print(problem)
             
 
     print("Completed evaluate_construction_dataset_folder()")
 
+def evaluate_construction_dataset_file(args):
+    face_to_instance = load_npz(args.instance_file)
+    face_to_seg = load_npz(args.semantic_file)
+    solid = load_compsolid(args.step_file)
+    problems = evaluate_example(solid, face_to_instance, face_to_seg)
+    if len(problems) >0:
+        print(f"Problem with {step_file}")
+        for problem in problems:
+            print(problem)
 
 
 if __name__ == '__main__':
@@ -768,6 +873,9 @@ if __name__ == '__main__':
     elif args.dataset_folder is not None:
         evaluate_folder(args)
     else:
-        evaluate_single_file(args)
+        if args.timeline_info is not None:
+            evaluate_single_file(args)
+        else:
+            evaluate_construction_dataset_file(args)
 
 
