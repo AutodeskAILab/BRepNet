@@ -324,15 +324,25 @@ class InstanceSegmentationEvaluator:
         problems = []
         num_additive = 0
         num_subtractive = 0
+        additive_face_indices = []
+        subtractive_face_indices = []
         for face_index in faces_indices_in_instance:
             segment = self.get_segment_type_for_face_index(face_index)
             op_type = self.get_op_type(segment)
             if op_type == "Additive":
                 num_additive += 1
+                additive_face_indices.append(face_index)
             else:
                 assert op_type == "Subtractive", "Unsupported operation type"
                 num_subtractive += 1
+                subtractive_face_indices.append(face_index)
         if num_additive > 0 and num_subtractive > 0:
+            if self.debug_mode:
+                debug_show_solid(
+                    self.solid, 
+                    faces_to_highlight=additive_face_indices,
+                    faces_to_highlight2=subtractive_face_indices
+                )
             problems.append(
                 {
                     "check": "operation_type_consistent_within_an_instance",
@@ -470,7 +480,8 @@ class InstanceSegmentationEvaluator:
         base_face_indices_for_instance = self.base_face_indices_for_instances[instance]
         for base_face_index in base_face_indices_for_instance:
             if not self.check_face_normals_align_with_vector(base_face_index, extrusion_direction):
-                #debug_show_solid(self.solid, faces_to_highlight=[base_face_index])
+                if self.debug_mode:
+                    debug_show_solid(self.solid, faces_to_highlight=[base_face_index])
                 problems.append(
                     {
                         "check": "check_base_face_normals_for_instance",
@@ -517,7 +528,12 @@ class InstanceSegmentationEvaluator:
                 )
         else:
             if not self.check_face_normals_parallel_to_vector(base_face_groups[0]["faces"], extrusion_direction):
-                #debug_show_solid(self.solid, faces_to_highlight=base_face_groups[0]["faces"])
+                if self.debug_mode:
+                    debug_show_solid(
+                        self.solid, 
+                        faces_to_highlight=base_face_groups[0]["faces"],
+                        faces_to_highlight2=base_face_groups[1]["faces"]
+                    )
                 problems.append(
                     {
                         "check": "check_base_face_normals_for_instance",
