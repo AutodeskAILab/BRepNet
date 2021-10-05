@@ -13,6 +13,7 @@ from OCC.Core.Geom2dAPI import Geom2dAPI_ProjectPointOnCurve
 from OCC.Core.GeomAPI import GeomAPI_ProjectPointOnSurf
 from OCC.Core.gp import gp_Pnt2d
 from OCC.Core.Geom2d import Geom2d_TrimmedCurve
+from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_MakeEdge
 
 import utils.data_utils as data_utils
 
@@ -34,6 +35,15 @@ def debug_show_solid(solid, faces_to_highlight=None, faces_to_highlight2=[]):
             else:
                 viewer.display(face)
     viewer.show()
+
+def debug_show_trimmed_curve(curve):
+    ts = curve.FirstParameter()
+    te = curve.LastParameter()
+    edge = BRepBuilderAPI_MakeEdge(curve, ts, te).Edge()
+    viewer = Viewer()
+    viewer.display(edge)
+    viewer.show()
+
 
 def display_2d_curves(curves, curves_to_highlight=set(), point=None):
     import logging
@@ -70,13 +80,13 @@ def display_2d_curves(curves, curves_to_highlight=set(), point=None):
 
 
 class InstanceSegmentationEvaluator:
-    def __init__(self, solid, face_to_instance, face_to_seg):
+    def __init__(self, solid, face_to_instance, face_to_seg, debug_mode=False):
         self.solid = solid
         self.faces = list(solid.faces())
         self.face_to_instance = face_to_instance
-        #self.entity_mapper = EntityMapper(solid)
         self.instance_to_faces = self.find_faces_in_each_instance(face_to_instance)
         self.face_to_seg = face_to_seg
+        self.debug_mode = debug_mode
 
         # Could be loaded from the segmentation dataset
         self.segment_index_to_name = [
@@ -204,38 +214,32 @@ class InstanceSegmentationEvaluator:
         box = self.solid.exact_box()
         return box.max_box_length()/100.0
 
-    def project_point_to_plane(self, point, plane):
-        gp_point = geom_utils.numpy_to_gp(point)
-        point_proj = GeomAPI_ProjectPointOnSurf(gp_point, plane)
-        assert point_proj.IsDone()
-        (u, v) = point_proj.Parameters(1)
-        return gp_Pnt2d(u, v)
+    def edge_is_line_normal_to_plane(self, edge, plane):
+        if edge.curve_type() != "line":
+            return False
+        line = edge.specific_curve()
+        line_axis = line.Position()
+        pln = plane.Pln()
+        plane_axis = pln.Axis()
+        if line_axis.IsParallel(plane_axis, self.angle_tol):
+            return True
+        return False
 
-    def find_closest_param_on_2d_curve(self, point2d, curve2d):
-        proj_curve = Geom2dAPI_ProjectPointOnCurve(point2d, curve2d)
-        u = proj_curve.LowerDistanceParameter() 
-        dist = proj_curve.LowerDistance()
-        assert dist < 0.1
-        return u
-
-    def trim_curve2(self, start, end, curve):
-        ts = self.find_closest_param_on_2d_curve(start, curve)
-        te = self.find_closest_param_on_2d_curve(end, curve)
-        if ts > te:
-            temp = ts
-            ts = te
-            te = temp
-        return Geom2d_TrimmedCurve(curve, ts, te)
         
-
     def project_barrel_edges_to_extrude_plane_for_face(self, plane, face_index):
         gpl = geomprojlib()
         face = self.faces[face_index]
         curves_2d = []
         for edge in face.edges():
+            if not edge.has_curve():
+                continue
+            if self.edge_is_line_normal_to_plane(edge, plane):
+                continue
+            assert edge.topods_shape().Location().IsIdentity()
             curve = edge.curve()
             u_bound = edge.u_bounds()
             curve_trimmed = Geom_TrimmedCurve(curve,  u_bound.a, u_bound.b)
+            #debug_show_trimmed_curve(curve_trimmed)
             try:
                 curve2 = gpl.Curve2d(curve_trimmed, u_bound.a, u_bound.b, plane)
             except:
@@ -247,16 +251,10 @@ class InstanceSegmentationEvaluator:
                 te = curve2.LastParameter()
                 assert ts > -1e10
                 assert te < 1e10
-                #vs = edge.start_vertex()
-                #vs_is_reversed = vs.topods_shape().Orientation() == TopAbs_REVERSED
-                #ve = edge.start_vertex()
-                #ve_is_reversed = ve.topods_shape().Orientation() == TopAbs_REVERSED
-                #start = self.project_point_to_plane(edge.start_vertex().point(), plane)
-                #end = self.project_point_to_plane(edge.end_vertex().point(), plane)
-                #trimmed = self.trim_curve2(start, end, curve2)
-
                 trimmed_2d = Geom2d_TrimmedCurve(curve2, ts, te)
                 curves_2d.append(trimmed_2d)
+                #display_2d_curves(curves_2d)
+
 
         return curves_2d
 
@@ -560,11 +558,12 @@ class InstanceSegmentationEvaluator:
             if not is_base_face:
                 if not self.check_face_normals_perpendicular_to_vector(face_index, extrusion_direction):
                     if len(problems) == 0:
-                        debug_show_solid(
-                            self.solid, 
-                            faces_to_highlight=self.base_face_indices_for_instances[instance],
-                            faces_to_highlight2 = [ face_index ]
-                        )
+                        # debug_show_solid(
+                        #     self.solid, 
+                        #     faces_to_highlight=self.base_face_indices_for_instances[instance],
+                        #     faces_to_highlight2 = [ face_index ]
+                        # )
+                        pass
                     problems.append(
                         {
                             "check": "check_barrel_face_normals_for_instance",
@@ -667,7 +666,7 @@ class InstanceSegmentationEvaluator:
                                 point = intersector.Point(i)
                                 if self.is_end_point(point, barrel_edge1) or self.is_end_point(point, barrel_edge2):
                                     continue
-                                if len(problems) == 0:
+                                if self.debug_mode:
                                     self.debug_show_intersections(
                                         instance,
                                         face_index1,
@@ -716,8 +715,13 @@ class InstanceSegmentationEvaluator:
 
 
 
-def evaluate_example(solid, face_to_instance, face_to_seg):
-    eval = InstanceSegmentationEvaluator(solid, face_to_instance, face_to_seg)
+def evaluate_example(solid, face_to_instance, face_to_seg, debug_mode=False):
+    eval = InstanceSegmentationEvaluator(
+        solid, 
+        face_to_instance, 
+        face_to_seg, 
+        debug_mode=debug_mode
+    )
     problems = eval.evaluate()
     return problems
 
@@ -825,7 +829,9 @@ def evaluate_construction_dataset_folder(args):
         c = 0
         while c < count:
             index = index + 1
-            assert index < 1000, "This has hung"
+            if index > 1000 and index > count:
+                # A file is missing
+                break
             model = f"{model_name}_{index:04d}"
             step_file = step_folder / (model + ".step")
             if not step_file.exists():
@@ -835,6 +841,7 @@ def evaluate_construction_dataset_folder(args):
                 continue
             instance_file = instance_folder / (f"{model_name}_{c}_instance.npz")
             if not instance_file.exists():
+                print(f"seg_file {seg_file} exists but {instance_file} is missing")
                 continue
             #print(f"Checking {step_file}")
             c = c + 1
@@ -847,8 +854,9 @@ def evaluate_construction_dataset_folder(args):
                 print(f"\"--step_file\", \"{step_file}\",")
                 print(f"\"--semantic_file\", \"{seg_file}\",")
                 print(f"\"--instance_file\",\"{instance_file}\"")
-                for problem in problems:
-                    print(problem)
+                print(problems[0])
+                # for problem in problems:
+                #     print(problem)
             
 
     print("Completed evaluate_construction_dataset_folder()")
@@ -857,9 +865,9 @@ def evaluate_construction_dataset_file(args):
     face_to_instance = load_npz(args.instance_file)
     face_to_seg = load_npz(args.semantic_file)
     solid = load_compsolid(args.step_file)
-    problems = evaluate_example(solid, face_to_instance, face_to_seg)
+    problems = evaluate_example(solid, face_to_instance, face_to_seg, debug_mode=True)
     if len(problems) >0:
-        print(f"Problem with {step_file}")
+        print(f"Problem with {args.step_file}")
         for problem in problems:
             print(problem)
 
