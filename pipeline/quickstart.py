@@ -54,13 +54,13 @@ if __name__ == '__main__':
     seg_dir =  dataset_dir / "breps/seg"
     if not seg_dir.exists():
         print(f"The segmentation directory is not found at {seg_dir}.  Please use dataset version s2.0.0 or later")
-        sys.exist(1)
+        sys.exit(1)
 
 
     train_test_file = dataset_dir / "train_test.json"
     if not train_test_file.exists():
         print(f"The file {train_test_file} is missing.  If you are building a new dataset please read docs/building_your_own_dataset.md")
-        sys.exist(1)
+        sys.exit(1)
 
     # This is where the intermediate files will be generated
     processed_dir = dataset_dir / "processed"
@@ -96,7 +96,7 @@ if __name__ == '__main__':
 
     if not dataset_file.exists():
         print(f"Error! Failed to generate {dataset_file}")
-        sys.exist(1)
+        sys.exit(1)
     else:
         print("Processing complete")
         print("You are now ready to train the model using the command")

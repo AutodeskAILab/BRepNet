@@ -12,6 +12,7 @@ from pipeline.extract_brepnet_data_from_json import BRepNetJsonExtractor
 import utils.data_utils as data_utils
 
 from tests.test_base import TestBase
+import unittest
 
 class TestDataloadersEquivalent(TestBase):
 
