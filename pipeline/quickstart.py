@@ -96,7 +96,7 @@ if __name__ == '__main__':
 
     if not dataset_file.exists():
         print(f"Error! Failed to generate {dataset_file}")
-        sys.exist(1)
+        sys.exit(1)
     else:
         print("Processing complete")
         print("You are now ready to train the model using the command")

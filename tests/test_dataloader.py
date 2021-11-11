@@ -11,6 +11,7 @@ from pipeline.extract_brepnet_data_from_step import BRepNetExtractor
 import utils.data_utils as data_utils
 
 from tests.test_base import TestBase
+import unittest
 
 class TestBRepNetDataset(TestBase):
 

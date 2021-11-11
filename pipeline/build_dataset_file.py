@@ -117,7 +117,7 @@ def get_train_test_lists_from_split(npz_folder, test_split):
     output_train_test_file = npz_folder / "train_test.json"
     if output_train_test_file.exists():
         print(f"Error!  The file {output_train_test_file} already exists.  Delete it if you want to regenerate it")
-        sys.exist(1)
+        sys.exit(1)
     train_test = {}
     train_test["train"] = train_val_files
     train_test["test"] = test_files
@@ -171,7 +171,7 @@ if __name__ == '__main__':
     npz_folder = Path(args.npz_folder)
     if not npz_folder.exists():
         print("The npz folder does not exist")
-        sys.exist(1)
+        sys.exit(1)
 
     test_split = None
     train_test_file = None
@@ -179,7 +179,7 @@ if __name__ == '__main__':
         train_test_file = Path(args.train_test)
         if not train_test_file.exists():
             print("The train test file does not exist")
-            sys.exist(1)
+            sys.exit(1)
     else:
         test_split = args.test_split
 
