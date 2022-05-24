@@ -678,11 +678,37 @@ class BRepNet(LightningModule):
     def training_step(self, batch, batch_idx):
         save_segmentation_output = False
         output = self.brepnet_step(batch, batch_idx, save_segmentation_output)
-                
+        
+        # The batch size is the number of faces
+        num_faces = self.num_faces_in_batch(batch)
+
         # Log some data to tensorboard
-        self.log("loss", output["loss"].item(), on_step=True, on_epoch=False)
-        self.log("train/loss", output["loss"].item(), on_step=False, on_epoch=True, sync_dist=True, prog_bar=False)
-        self.log("train/accuracy", output["accuracy"], on_step=False, on_epoch=True, sync_dist=True, prog_bar=False)
+        self.log(
+            "loss", 
+            output["loss"].item(), 
+            batch_size=num_faces, 
+            on_step=True, 
+            on_epoch=False
+        )
+
+        self.log(
+            "train/loss", 
+            output["loss"].item(), 
+            batch_size=num_faces, 
+            on_step=False, 
+            on_epoch=True, 
+            sync_dist=True, 
+            prog_bar=False
+        )
+        self.log(
+            "train/accuracy", 
+            output["accuracy"], 
+            batch_size=num_faces, 
+            on_step=False, 
+            on_epoch=True, 
+            sync_dist=True, 
+            prog_bar=False
+        )
         return output["loss"]
 
 
@@ -694,7 +720,19 @@ class BRepNet(LightningModule):
         """
         save_segmentation_output = False
         output = self.brepnet_step(batch, batch_idx, save_segmentation_output)
-        self.log("validation/loss", output["loss"].item(), on_step=False, on_epoch=True, sync_dist=True, prog_bar=False)
+
+        # The batch size is the number of faces
+        num_faces = self.num_faces_in_batch(batch)
+
+        self.log(
+            "validation/loss", 
+            output["loss"].item(), 
+            batch_size=num_faces, 
+            on_step=False, 
+            on_epoch=True, 
+            sync_dist=True, 
+            prog_bar=False
+        )
         return output
 
 
@@ -729,7 +767,8 @@ class BRepNet(LightningModule):
         return {
             "accuracy": accuracy,
             "mean_iou": mean_iou,
-            "per_class_iou": per_class_iou
+            "per_class_iou": per_class_iou,
+            "total_num_faces": total_num_faces
         }
 
 
@@ -738,8 +777,25 @@ class BRepNet(LightningModule):
         Collate information from all validation batches
         """
         output = self.collate_epoch_outputs(outputs)
-        self.log("validation/accuracy", output["accuracy"], on_step=False, on_epoch=True, sync_dist=True, prog_bar=False)
-        self.log("validation/mean_iou", output["mean_iou"], on_step=False, on_epoch=True, sync_dist=True, prog_bar=False)
+        num_faces = output["total_num_faces"]
+        self.log(
+            "validation/accuracy", 
+            output["accuracy"], 
+            batch_size=num_faces, 
+            on_step=False, 
+            on_epoch=True, 
+            sync_dist=True, 
+            prog_bar=False
+        )
+        self.log(
+            "validation/mean_iou", 
+            output["mean_iou"], 
+            batch_size=num_faces, 
+            on_step=False, 
+            on_epoch=True, 
+            sync_dist=True, 
+            prog_bar=False
+        )
 
         # If the segment names information is provided then log the 
         # per-class IoU
@@ -747,7 +803,15 @@ class BRepNet(LightningModule):
             assert len(self.segment_names) == len(output["per_class_iou"])
             for name, iou in zip(self.segment_names, output["per_class_iou"]):
                 log_name = f"validation/{name}_iou"
-                self.log(log_name, iou, on_step=False, on_epoch=True, sync_dist=True, prog_bar=False)
+                self.log(
+                    log_name, 
+                    iou, 
+                    batch_size=num_faces, 
+                    on_step=False, 
+                    on_epoch=True, 
+                    sync_dist=True, 
+                    prog_bar=False
+                )
 
     def test_step(self, batch, batch_idx):
         """
@@ -762,9 +826,26 @@ class BRepNet(LightningModule):
         Collate the results from all test batches
         """
         output = self.collate_epoch_outputs(outputs)
+        num_faces = output["total_num_faces"]
 
-        self.log("test/accuracy", output["accuracy"], on_step=False, on_epoch=True, sync_dist=True, prog_bar=False)
-        self.log("test/mean_iou", output["mean_iou"], on_step=False, on_epoch=True, sync_dist=True, prog_bar=False)
+        self.log(
+            "test/accuracy", 
+            output["accuracy"],
+            batch_size=num_faces,
+            on_step=False, 
+            on_epoch=True, 
+            sync_dist=True, 
+            prog_bar=False
+        )
+        self.log(
+            "test/mean_iou", 
+            output["mean_iou"],
+            batch_size=num_faces,
+            on_step=False, 
+            on_epoch=True, 
+            sync_dist=True, 
+            prog_bar=False
+        )
 
         # If the segment names information is provided then log the 
         # per-class IoU
@@ -917,3 +998,14 @@ class BRepNet(LightningModule):
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr = self.opts.learning_rate)
+
+
+    def num_faces_in_batch(self, batch):
+        """
+        Find the number of B-Rep faces in this batch
+        """
+        Xf = batch["face_features"]
+        labels = batch["labels"]
+        num_faces = labels.size(0)
+        assert num_faces == Xf.size(0), "Xf tensor must have size equal to num_faces"
+        return num_faces
