@@ -21,7 +21,7 @@ def scale_solid_to_unit_box(solid):
     if isinstance(solid, Solid):
         return solid.scale_to_unit_box(copy=True)
     solid = Solid(solid, allow_compound=True)
-    solid.scale_to_unit_box(copy=True)
+    solid = solid.scale_to_unit_box(copy=True)
     return solid.topods_shape()
 
 
