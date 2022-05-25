@@ -12,7 +12,7 @@ dependencies:
   - scikit-learn
   - pytorch-lightning
   - xlsxwriter
-  - occwl
+  - occwl=1.0.0
   - jupyter
   - pythreejs
   - tensorboard
