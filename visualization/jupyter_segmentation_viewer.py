@@ -75,7 +75,7 @@ class JupyterSegmentationViewer:
         solids = self.load_step()
         assert len(solids) == 1, "Expect only 1 solid"
         self.solid = solids[0]
-        self.entity_mapper = EntityMapper(self.solid.topods_solid())
+        self.entity_mapper = EntityMapper(self.solid.topods_shape())
 
         self.seg_folder = seg_folder
         self.logit_folder = logit_folder
@@ -139,7 +139,7 @@ class JupyterSegmentationViewer:
         renderer = MultiSelectJupyterRenderer()
         renderer.register_select_callback(self.select_face_callback)
         renderer.DisplayShape(
-            self.solid.topods_solid(), 
+            self.solid.topods_shape(), 
             topo_level="Face", 
             render_edges=True, 
             update=True,
