@@ -6,14 +6,14 @@ channels:
 dependencies:
   - python=3.7
   - pythonocc-core=7.5.1
-  - pytorch
-  - tqdm
-  - igl
-  - scikit-learn
-  - pytorch-lightning
-  - xlsxwriter
+  - pytorch=1.7.1
+  - tqdm=4.64.0
+  - igl=2.2.1
+  - scikit-learn=1.0.2
+  - pytorch-lightning=1.5.10
+  - xlsxwriter=3.0.3
   - occwl=1.0.0
-  - jupyter
-  - pythreejs
-  - tensorboard
+  - jupyter=1.0.0
+  - pythreejs=2.3.0
+  - tensorboard=2.9.0
 
