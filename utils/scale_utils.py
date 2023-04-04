@@ -9,6 +9,9 @@ from OCC.Core.BRepBuilderAPI import BRepBuilderAPI_Transform
 
 # occwl
 from occwl.solid import Solid
+from occwl.compound import Compound
+
+from utils.create_occwl_from_occ import create_occwl
 
 def find_box(solid):
     bbox = Bnd_Box()
@@ -20,7 +23,7 @@ def find_box(solid):
 def scale_solid_to_unit_box(solid):
     if isinstance(solid, Solid):
         return solid.scale_to_unit_box(copy=True)
-    solid = Solid(solid, allow_compound=True)
+    solid = create_occwl(solid)
     solid = solid.scale_to_unit_box(copy=True)
     return solid.topods_shape()
 
