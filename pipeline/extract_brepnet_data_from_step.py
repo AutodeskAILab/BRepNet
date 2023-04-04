@@ -42,6 +42,7 @@ from pipeline.face_index_validator import FaceIndexValidator
 from pipeline.segmentation_file_crosschecker import SegmentationFileCrosschecker
 
 import utils.scale_utils as scale_utils 
+from utils.create_occwl_from_occ import create_occwl
 
 class BRepNetExtractor:
     def __init__(self, step_file, output_dir, feature_schema, scale_body=True):
@@ -415,7 +416,7 @@ class BRepNetExtractor:
 
         """
         face_grids = []
-        solid = Solid(body)
+        solid = create_occwl(body)
         for face in solid.faces():
             assert len(face_grids) == entity_mapper.face_index(face.topods_shape())
             face_grids.append(self.extract_face_point_grid(face))
@@ -463,7 +464,7 @@ class BRepNetExtractor:
             - Rx, Ry, Rz (Normal for the right face)
         """
         coedge_grids = []
-        solid = Solid(body)
+        solid = create_occwl(body)
         top_exp = TopologyUtils.TopologyExplorer(body, ignore_orientation=False)
         for wire in top_exp.wires():
             wire_exp = TopologyUtils.WireExplorer(wire)
@@ -527,7 +528,7 @@ class BRepNetExtractor:
 
         This is a homogeneous transform matrix from local to global coordinates
         """
-        solid = Solid(body)
+        solid = create_occwl(body)
         top_exp = TopologyUtils.TopologyExplorer(body, ignore_orientation=False)
         coedge_lcs = []
         for wire in top_exp.wires():
